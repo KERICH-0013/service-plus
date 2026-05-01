@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Support – Service Plus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-4xl mx-auto p-6">
+        <h1 class="text-2xl font-bold mb-4">Support Center</h1>
+        <div class="bg-white rounded-lg shadow p-6 space-y-6">
+            <div>
+                <h2 class="text-xl font-semibold">📞 Contact Support</h2>
+                <p>Email: <a href="mailto:support@serviceplus.com" class="text-blue-600">support@serviceplus.com</a></p>
+                <p>Response time: within 24 hours</p>
+            </div>
+            <div>
+                <h2 class="text-xl font-semibold">❓ Frequently Asked Questions</h2>
+                <ul class="list-disc pl-5 space-y-2">
+                    <li><strong>How do I start a session?</strong> Click "Start Session" on a pending booking.</li>
+                    <li><strong>What does the panic button do?</strong> It sends an immediate email and WhatsApp alert to your emergency contact with your live location.</li>
+                    <li><strong>How is my payment protected?</strong> Payments are held in escrow and released only after you complete the service.</li>
+                    <li><strong>How do I update my emergency contact?</strong> Go to Profile → Emergency Contact.</li>
+                </ul>
+            </div>
+            <div>
+                <h2 class="text-xl font-semibold">🛡️ Safety Reminder</h2>
+                <p>Always keep your phone's location services enabled when using the platform. The panic button is for genuine emergencies only.</p>
+            </div>
+            <div>
+                <h2 class="text-xl font-semibold">📚 </h2>
+                <a href="#" class="text-blue-600"></a>
+            </div>
+        </div>
+        <div class="mt-4">
+            <a href="{{ url_for('dashboard') }}" class="text-blue-600">← Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Emergency Contact – Service Plus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-2xl mx-auto p-6">
+        <h1 class="text-2xl font-bold mb-4">Emergency Contact Settings</h1>
+        <p class="text-gray-600 mb-4">This contact will receive SMS/email alerts when you press the panic button during an active booking.</p>
+        
+        <form method="POST" action="{{ url_for('profile') }}" class="bg-white rounded-lg shadow p-6 space-y-4">
+            <div>
+                <label class="block font-bold mb-1">Emergency Contact Name</label>
+                <input type="text" name="emergency_contact_name" value="{{ current_user.emergency_contact_name or '' }}" class="w-full border rounded p-2">
+            </div>
+            <div>
+                <label class="block font-bold mb-1">Emergency Contact Email</label>
+                <input type="email" name="emergency_contact_email" value="{{ current_user.emergency_contact_email or '' }}" class="w-full border rounded p-2">
+                <p class="text-xs text-gray-500">We will send email alerts to this address.</p>
+            </div>
+            <div>
+                <label class="block font-bold mb-1">Emergency Contact Phone (optional)</label>
+                <input type="tel" name="emergency_contact_phone" value="{{ current_user.emergency_contact_phone or '' }}" class="w-full border rounded p-2">
+            </div>
+            <div>
+                <label class="block font-bold mb-1">Carrier (for SMS gateway, optional)</label>
+                <select name="emergency_contact_carrier" class="w-full border rounded p-2">
+                    <option value="">-- None (email only) --</option>
+                    <option value="txt.att.net" {% if current_user.emergency_contact_carrier == 'txt.att.net' %}selected{% endif %}>AT&T</option>
+                    <option value="tmomail.net" {% if current_user.emergency_contact_carrier == 'tmomail.net' %}selected{% endif %}>T-Mobile</option>
+                    <option value="vtext.com" {% if current_user.emergency_contact_carrier == 'vtext.com' %}selected{% endif %}>Verizon</option>
+                </select>
+            </div>
+            <button type="submit" class="bg-black text-white px-4 py-2 rounded hover:bg-gray-800">💾 Save Emergency Contact</button>
+        </form>
+        
+        <div class="mt-4">
+            <a href="{{ url_for('dashboard') }}" class="text-blue-600 hover:underline">← Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Register – Service Plus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .step-active { background-color: #000000; color: white; border-color: #000000; }
+        .step-completed { background-color: #22c55e; color: white; border-color: #22c55e; }
+        .step-pending { background-color: #f3f4f6; color: #6b7280; border-color: #e5e7eb; }
+        input:focus, select:focus {
+            outline: none;
+            ring: 2px solid #000000;
+            border-color: #000000;
+        }
+        .btn-primary {
+            background: #000000;
+            color: white;
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            background: #2c2c2c;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<!-- Simple Navbar -->
+<nav class="bg-white shadow-sm fixed top-0 w-full z-50 border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <a href="{{ url_for('index') }}" class="text-2xl font-black tracking-tight">Service<span class="text-orange-500">Plus</span></a>
+            <div class="flex items-center space-x-4">
+                <a href="{{ url_for('login') }}" class="font-medium text-gray-600 hover:text-gray-900">Login</a>
+                <a href="{{ url_for('register') }}" class="px-5 py-2 bg-black text-white rounded-lg font-semibold shadow-sm">Register</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<main class="pt-24 pb-16 px-4">
+    <div class="max-w-2xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-black text-gray-900">Create your account</h1>
+            <p class="text-gray-500 mt-2">Join the safest platform for gig professionals</p>
+        </div>
+
+        <!-- Step indicator -->
+        <div class="flex items-center justify-between mb-10 max-w-md mx-auto">
+            <div class="flex-1 text-center">
+                <div class="step-active w-10 h-10 rounded-full border-2 flex items-center justify-center mx-auto mb-2 bg-black text-white border-black">1</div>
+                <span class="text-sm font-medium text-gray-900">Choose role</span>
+            </div>
+            <div class="flex-1 h-px bg-gray-200 mx-2"></div>
+            <div class="flex-1 text-center">
+                <div class="step-pending w-10 h-10 rounded-full border-2 flex items-center justify-center mx-auto mb-2">2</div>
+                <span class="text-sm text-gray-500">Your details</span>
+            </div>
+            <div class="flex-1 h-px bg-gray-200 mx-2"></div>
+            <div class="flex-1 text-center">
+                <div class="step-pending w-10 h-10 rounded-full border-2 flex items-center justify-center mx-auto mb-2">3</div>
+                <span class="text-sm text-gray-500">Verification</span>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-4 rounded-lg {% if category == 'danger' %}bg-red-50 text-red-700 border border-red-200{% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Registration Form (with file upload) -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+            <form method="POST" action="{{ url_for('register') }}" id="registerForm" enctype="multipart/form-data">
+                <!-- Role selection (Step 1) -->
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-gray-700 mb-3">I want to join as a:</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="relative flex cursor-pointer">
+                            <input type="radio" name="role" value="client" class="peer sr-only" {% if request.args.get('role') == 'client' %}checked{% endif %} required>
+                            <div class="w-full border rounded-xl p-4 text-center transition-all peer-checked:border-black peer-checked:bg-gray-50 peer-checked:shadow-sm">
+                                <span class="material-symbols-outlined text-3xl text-gray-600 peer-checked:text-black">person</span>
+                                <p class="font-semibold mt-1">Client</p>
+                                <p class="text-xs text-gray-400 mt-1">Book services</p>
+                            </div>
+                        </label>
+                        <label class="relative flex cursor-pointer">
+                            <input type="radio" name="role" value="provider" class="peer sr-only" {% if request.args.get('role') == 'provider' %}checked{% endif %} required>
+                            <div class="w-full border rounded-xl p-4 text-center transition-all peer-checked:border-black peer-checked:bg-gray-50 peer-checked:shadow-sm">
+                                <span class="material-symbols-outlined text-3xl text-gray-600 peer-checked:text-black">work</span>
+                                <p class="font-semibold mt-1">Provider</p>
+                                <p class="text-xs text-gray-400 mt-1">Offer services</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Personal details (Step 2) -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Full name *</label>
+                        <input type="text" name="full_name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-black focus:ring-1 focus:ring-black" placeholder="e.g., Jackie Mburu">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Email address *</label>
+                        <input type="email" name="email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-black focus:ring-1 focus:ring-black" placeholder="Jackie@gmailcom">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Password *</label>
+                        <input type="password" name="password" id="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-black focus:ring-1 focus:ring-black" placeholder="At least 6 characters">
+                        <p class="text-xs text-gray-400 mt-1" id="passwordHint">Must be at least 6 characters</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Confirm password *</label>
+                        <input type="password" name="confirm_password" id="confirmPassword" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-black focus:ring-1 focus:ring-black" placeholder="Repeat your password">
+                    </div>
+
+                    <!-- Address field (optional for providers, recommended for clients) -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Address <span class="text-xs font-normal text-gray-400">(optional, recommended for clients)</span></label>
+                        <input type="text" name="address" id="address" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-black focus:ring-1 focus:ring-black" placeholder="Street, city, postal code – so providers know where to go">
+                        <p class="text-xs text-gray-400 mt-1">📍 Providers can skip, clients: this helps providers find you.</p>
+                    </div>
+
+                    <!-- NEW: ID / Passport upload -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Government-issued ID / Passport *</label>
+                        <input type="file" name="id_document" accept="image/*,application/pdf" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <p class="text-xs text-gray-400 mt-1">Upload a clear photo of your ID (PNG, JPG, PDF). Required for verification.</p>
+                    </div>
+                </div>
+
+                <!-- Verification step note (Step 3 - placeholder) -->
+                <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                    <div class="flex items-center gap-2 text-sm text-gray-600">
+                        <span class="material-symbols-outlined text-lg">verified</span>
+                        <span class="font-medium">After registration, your ID will be reviewed by an admin.</span>
+                    </div>
+                </div>
+
+                <!-- Submit button -->
+                <button type="submit" class="btn-primary w-full mt-6 py-3 rounded-xl font-bold text-center">Create account →</button>
+            </form>
+
+            <p class="text-center text-sm text-gray-500 mt-6">
+                Already have an account? <a href="{{ url_for('login') }}" class="font-bold text-black hover:underline">Log in</a>
+            </p>
+        </div>
+
+        <!-- Safety promise banner -->
+        <div class="mt-8 text-center text-xs text-gray-400">
+            <span class="inline-flex items-center gap-1">🔒 Your data is encrypted & never shared.</span>
+        </div>
+    </div>
+</main>
+
+<!-- Simple footer -->
+<footer class="bg-gray-100 py-6 text-center text-gray-400 text-sm mt-12">
+    <p>© 2026 Service Plus – Secure Institutional Booking System</p>
+</footer>
+
+<!-- Client-side validation (includes address field note) -->
+<script>
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        const password = document.getElementById('password').value;
+        const confirm = document.getElementById('confirmPassword').value;
+        const roleSelected = document.querySelector('input[name="role"]:checked');
+        
+        if (!roleSelected) {
+            e.preventDefault();
+            alert('Please select whether you want to register as a Client or Provider.');
+            return false;
+        }
+        
+        if (password !== confirm) {
+            e.preventDefault();
+            alert('Passwords do not match.');
+            return false;
+        }
+        
+        if (password.length < 6) {
+            e.preventDefault();
+            alert('Password must be at least 6 characters.');
+            return false;
+        }
+        
+        // Optional: check that a file was selected
+        const fileInput = document.querySelector('input[name="id_document"]');
+        if (fileInput && fileInput.files.length === 0) {
+            e.preventDefault();
+            alert('Please upload your government-issued ID or passport.');
+            return false;
+        }
+        
+        return true;
+    });
+    
+    // Update password hint
+    document.getElementById('password').addEventListener('input', function() {
+        const hint = document.getElementById('passwordHint');
+        if (this.value.length >= 6) {
+            hint.innerHTML = '✓ Strong enough';
+            hint.classList.add('text-green-600');
+            hint.classList.remove('text-gray-400');
+        } else {
+            hint.innerHTML = 'Must be at least 6 characters';
+            hint.classList.remove('text-green-600');
+            hint.classList.add('text-gray-400');
+        }
+    });
+    
+    // Auto-select role from URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const roleParam = urlParams.get('role');
+    if (roleParam === 'provider') {
+        document.querySelector('input[value="provider"]').checked = true;
+    } else if (roleParam === 'client') {
+        document.querySelector('input[value="client"]').checked = true;
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Plus - Provider Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .sos-pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(186,26,26,0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(186,26,26,0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(186,26,26,0); }
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-pending { background: #fef3c7; color: #d97706; }
+        .status-active { background: #dcfce7; color: #16a34a; }
+        .status-completed { background: #e0e7ff; color: #4338ca; }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<!-- Top Navigation Bar -->
+<nav class="bg-white shadow-sm fixed top-0 w-full z-50 border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl font-black">Service<span class="text-orange-500">Plus</span></span>
+                <span class="px-2 py-1 bg-gray-100 text-xs font-bold rounded">PROVIDER</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-sm font-medium text-gray-700">{{ current_user.full_name }}</span>
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('admin_dashboard') }}" class="bg-gray-800 text-white px-3 py-1 rounded-md hover:bg-gray-700">Admin Panel</a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}" class="text-sm text-red-600 hover:underline">Logout</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Sidebar -->
+<aside class="hidden md:block fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 pt-6">
+    <div class="px-4 mb-6">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
+                <span class="material-symbols-outlined text-white">verified</span>
+            </div>
+            <div>
+                <div class="font-black">Provider Console</div>
+                <div class="text-xs text-gray-500">SECURE DASHBOARD</div>
+            </div>
+        </div>
+    </div>
+    <nav class="space-y-1">
+        <a href="#" class="flex items-center gap-3 px-6 py-3 bg-gray-50 text-black font-bold border-r-4 border-black">📊 Dashboard</a>
+        <a href="{{ url_for('active_sessions') }}" class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50">🛡️ Active Sessions</a>
+        <a href="{{ url_for('upcoming_tasks') }}" class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50">📅 Upcoming Tasks</a>
+        <a href="{{ url_for('provider_services') }}" class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50">✨ Manage Services</a>
+        <a href="{{ url_for('profile') }}" class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50">📞 Emergency Contact</a>
+        <a href="#" class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50">🏆 Provider Network</a>
+        <a href="{{ url_for('audit_logs') }}" class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50">🔒 Audit Logs</a>
+    </nav>
+    <div class="absolute bottom-6 left-0 right-0 px-4">
+        <button onclick="alert('🚨 EMERGENCY ALERT TRIGGERED! Authorities and emergency contacts notified.')" class="w-full py-3 bg-red-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 sos-pulse">
+            <span class="material-symbols-outlined">emergency</span>
+            SOS PANIC SIGNAL
+        </button>
+        <div class="mt-4 pt-4 border-t border-gray-200">
+            <a href="{{ url_for('support') }}" class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50">💬 Support</a>
+        </div>
+    </div>
+</aside>
+
+<!-- Main Content -->
+<main class="md:ml-64 pt-20 p-4 md:p-6">
+    <div class="max-w-6xl mx-auto">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+            <!-- Safety Score -->
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200 p-5">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Safety Score</p>
+                        <p class="text-3xl font-black text-gray-800 mt-1">98.4%</p>
+                    </div>
+                    <div class="bg-green-50 rounded-full p-2">
+                        <span class="material-symbols-outlined text-green-600 text-2xl">security</span>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                        <div class="bg-green-500 h-1.5 rounded-full" style="width: 98.4%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Escrow Balance -->
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200 p-5">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Escrow Balance</p>
+                        <p class="text-3xl font-black text-gray-800 mt-1">2,450</p>
+                    </div>
+                    <div class="bg-orange-50 rounded-full p-2">
+                        <span class="material-symbols-outlined text-orange-500 text-2xl">account_balance_wallet</span>
+                    </div>
+                </div>
+                <p class="text-xs text-green-600 mt-3">+12% from last month</p>
+            </div>
+
+            <!-- Active Sessions -->
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200 p-5">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Active Sessions</p>
+                        <p class="text-3xl font-black text-gray-800 mt-1">1</p>
+                    </div>
+                    <div class="bg-blue-50 rounded-full p-2">
+                        <span class="material-symbols-outlined text-blue-500 text-2xl">monitor_heart</span>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-3">Currently ongoing</p>
+            </div>
+
+            <!-- Your Services -->
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200 p-5">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Your Services</p>
+                        <p class="text-3xl font-black text-gray-800 mt-1">{{ services_count if services_count else 0 }}</p>
+                    </div>
+                    <div class="bg-purple-50 rounded-full p-2">
+                        <span class="material-symbols-outlined text-purple-500 text-2xl"></span>
+                    </div>
+                </div>
+                <p class="text-xs text-blue-600 mt-3">
+                    <a href="{{ url_for('provider_services') }}" class="hover:underline">Manage →</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Ongoing Session Card -->
+        {% if bookings|selectattr("status", "equalto", "active")|list %}
+            {% set active = bookings|selectattr("status", "equalto", "active")|first %}
+            <div class="bg-black text-white rounded-xl overflow-hidden mb-6 shadow-lg">
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="p-6">
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                            <span class="text-xs font-bold uppercase tracking-wider">ONGOING SESSION - PROTECTED</span>
+                        </div>
+                        <h2 class="text-2xl font-bold mb-2">Session with {{ active.client.full_name }}</h2>
+                        <p class="text-gray-300 mb-4">Service: {{ active.service.title if active.service else active.service_type }}</p>
+                        <div class="flex gap-6 mb-6">
+                            <div>
+                                <p class="text-xs text-gray-400">CHECK-IN COUNTDOWN</p>
+                                <p class="text-3xl font-mono font-bold">04:52</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400">LOCATION SHARING</p>
+                                <p class="font-semibold">Active - Precise GPS</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button class="px-4 py-2 bg-white text-black font-bold rounded-lg hover:bg-gray-100">✅ Confirm Safety</button>
+                            <button class="px-4 py-2 border border-white/30 text-white font-bold rounded-lg hover:bg-white/10">📋 Session Details</button>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-6 flex flex-col items-center justify-center text-center">
+                        <img src="https://ui-avatars.com/api/?background=fd761a&color=fff&rounded=true&size=80&name={{ active.client.full_name|replace(' ', '+') }}" class="w-20 h-20 rounded-full border-4 border-green-500 mb-3">
+                        <p class="font-bold">{{ active.client.full_name }}</p>
+                        <p class="text-xs text-gray-400 uppercase tracking-wider">Identity Verified ✓</p>
+                        <p class="text-xs text-green-400 mt-2">Live location shared with dispatch</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+                <div class="flex justify-between items-center mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined">share_location</span>
+                        <span class="font-bold">Live Tracking</span>
+                    </div>
+                    <span class="px-2 py-1 bg-gray-100 text-xs font-bold rounded">ENCRYPTED</span>
+                </div>
+                <div class="bg-gray-100 rounded-lg h-48 flex items-center justify-center border">
+                    <div class="text-center">
+                        <span class="material-symbols-outlined text-4xl text-gray-400">location_on</span>
+                        <p class="text-sm text-gray-500 mt-1">Your location is being shared with dispatch and client</p>
+                        <p class="text-xs text-gray-400">Lat: 37.7749° N, Long: 122.4194° W</p>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-3 italic">↑ Live location updates every 30 seconds</p>
+            </div>
+        {% else %}
+            <div class="bg-gray-100 rounded-xl p-8 text-center mb-6 border border-gray-200">
+                <span class="material-symbols-outlined text-5xl text-gray-400">sleep</span>
+                <h3 class="text-lg font-bold mt-2">No active session</h3>
+                <p class="text-gray-500 text-sm">When you start a job, safety features will appear here.</p>
+            </div>
+        {% endif %}
+
+        <!-- Bookings List -->
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="font-bold text-lg flex items-center gap-2">
+                    <span class="material-symbols-outlined">calendar_today</span>
+                    Your Bookings
+                </h3>
+            </div>
+
+            {% if bookings %}
+                <div class="divide-y divide-gray-100">
+                    {% for booking in bookings %}
+                    <div class="p-4 hover:bg-gray-50 transition">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="status-badge 
+                                        {% if booking.status == 'pending' %}status-pending
+                                        {% elif booking.status == 'active' %}status-active
+                                        {% else %}status-completed{% endif %}">
+                                        {{ booking.status|upper }}
+                                    </span>
+                                    <span class="text-sm text-gray-500">{{ booking.created_at.strftime('%Y-%m-%d %H:%M') if booking.created_at else 'Recently' }}</span>
+                                </div>
+                                <p class="font-semibold mt-1">
+                                    {{ booking.client.full_name if booking.client else 'Unknown' }} booked 
+                                    “{{ booking.service.title if booking.service else 'Service' }}”
+                                </p>
+                                <div class="flex flex-wrap gap-4 mt-1 text-sm text-gray-600">
+                                    <span>💰 ${{ "%.2f"|format(booking.service.price) if booking.service else 'N/A' }}</span>
+                                    <span>⏱ {{ booking.service.duration_minutes if booking.service else '?' }} min</span>
+                                    <span>📍 {{ booking.client.address if booking.client and booking.client.address else 'Address not provided' }}</span>
+                                </div>
+                                {% if booking.scheduled_time %}
+                                <p class="text-xs text-gray-400 mt-1">📅 Scheduled: {{ booking.scheduled_time.strftime('%A, %B %d at %I:%M %p') }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="flex gap-2">
+                                {% if booking.status == 'pending' %}
+                                    <a href="{{ url_for('update_booking_status', booking_id=booking.id, new_status='active') }}" 
+                                       class="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition">
+                                        ▶ Start Session
+                                    </a>
+                                {% elif booking.status == 'active' %}
+                                    <a href="{{ url_for('update_booking_status', booking_id=booking.id, new_status='completed') }}" 
+                                       class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition">
+                                        ✅ Complete & Release Payment
+                                    </a>
+                                    <form method="POST" action="{{ url_for('panic_trigger', booking_id=booking.id) }}" style="display:inline;">
+                                        <button type="submit" class="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-sm">sos</span>
+                                            Panic
+                                        </button>
+                                    </form>
+                                {% elif booking.status == 'completed' %}
+                                    <span class="px-4 py-2 bg-gray-100 text-gray-500 text-sm rounded-lg">Completed ✓</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="p-8 text-center text-gray-500">
+                    <span class="material-symbols-outlined text-4xl">inbox</span>
+                    <p class="mt-2">No bookings yet. When clients book you, they'll appear here.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Quick Action: Manage Services Card -->
+        <div class="mt-6 p-4 bg-white border border-gray-200 rounded-lg shadow-sm flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-2xl text-orange-500">add_circle</span>
+                <div>
+                    <p class="font-bold">Add or edit your services</p>
+                    <p class="text-sm text-gray-500">Create services that clients can book (title, price, duration, category).</p>
+                </div>
+            </div>
+            <a href="{{ url_for('provider_services') }}" class="px-4 py-2 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition">Manage Services →</a>
+        </div>
+
+        <!-- Safety Reminder -->
+        <div class="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+            <div class="flex gap-3">
+                <span class="material-symbols-outlined text-orange-600">security</span>
+                <div>
+                    <p class="font-bold text-sm">Your safety is our priority</p>
+                    <p class="text-xs text-gray-600">Panic button sends real-time location to emergency contacts. Automatic check-ins every 15 minutes. All payments held in escrow.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Mobile floating panic button -->
+<div class="md:hidden fixed bottom-20 right-4 z-50">
+    <button onclick="alert('🚨 EMERGENCY ALERT TRIGGERED!')" class="w-14 h-14 bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg sos-pulse">
+        <span class="material-symbols-outlined text-2xl">sos</span>
+    </button>
+</div>
+
+<!-- Mobile bottom nav -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around py-2 z-40">
+    <a href="#" class="flex flex-col items-center text-black"><span class="material-symbols-outlined">dashboard</span><span class="text-xs">Home</span></a>
+    <a href="#" class="flex flex-col items-center text-gray-500"><span class="material-symbols-outlined">monitor_heart</span><span class="text-xs">Sessions</span></a>
+    <a href="#" class="flex flex-col items-center text-gray-500"><span class="material-symbols-outlined">event_note</span><span class="text-xs">Tasks</span></a>
+    <a href="#" class="flex flex-col items-center text-gray-500"><span class="material-symbols-outlined">person</span><span class="text-xs">Profile</span></a>
+</nav>
+
+<!-- Location Tracking Script (only runs when an active booking exists) -->
+<script>
+    // Only start location tracking if there is an active booking
+    {% if bookings|selectattr("status", "equalto", "active")|list %}
+        // Get the active booking ID (the 'active' variable is defined earlier)
+        const bookingId = {{ active.id }};
+
+        // Function to get current position and send it to the server
+        function sendLocation() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    fetch(`/api/location/${bookingId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ latitude: lat, longitude: lng })
+                    })
+                    .then(response => response.json())
+                    .then(data => console.log('Location sent', data))
+                    .catch(err => console.error('Location error', err));
+                }, function(error) {
+                    console.error("Geolocation error:", error);
+                    let warningDiv = document.getElementById('location-warning');
+                    if (!warningDiv) {
+                        warningDiv = document.createElement('div');
+                        warningDiv.id = 'location-warning';
+                        warningDiv.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4';
+                        warningDiv.innerHTML = '⚠️ Location access is blocked. Emergency contacts will not receive your live location. Please allow location access in your browser settings.';
+                        document.querySelector('main').prepend(warningDiv);
+                    }
+                });
+            } else {
+                console.log("Geolocation not supported by this browser.");
+                let warningDiv = document.getElementById('location-warning');
+                if (!warningDiv) {
+                    warningDiv = document.createElement('div');
+                    warningDiv.id = 'location-warning';
+                    warningDiv.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4';
+                    warningDiv.innerHTML = '⚠️ Geolocation is not supported by your browser. Emergency contacts will not receive your live location.';
+                    document.querySelector('main').prepend(warningDiv);
+                }
+            }
+        }
+
+        // Send location immediately when dashboard loads
+        sendLocation();
+        // Then repeat every 30 seconds
+        setInterval(sendLocation, 30000);
+    {% endif %}
+</script>
+
+</body>
+</html>

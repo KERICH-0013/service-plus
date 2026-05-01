@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Service Plus – Safe & Secure Booking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .hero-gradient {
+            background: linear-gradient(135deg, #f8f9ff 0%, #eef2ff 100%);
+        }
+        .btn-primary {
+            background: #000000;
+            color: white;
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            background: #2c2c2c;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.2);
+        }
+        .btn-outline {
+            border: 2px solid #000000;
+            color: #000000;
+            transition: all 0.2s ease;
+        }
+        .btn-outline:hover {
+            background: #000000;
+            color: white;
+            transform: translateY(-2px);
+        }
+        .feature-card {
+            transition: all 0.2s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -12px rgba(0,0,0,0.1);
+        }
+        .sos-button {
+            box-shadow: 0 0 0 0 rgba(186,26,26,0.5);
+            animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(186,26,26,0.5); }
+            70% { box-shadow: 0 0 0 12px rgba(186,26,26,0); }
+            100% { box-shadow: 0 0 0 0 rgba(186,26,26,0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<!-- Simple Navbar -->
+<nav class="bg-white shadow-sm fixed top-0 w-full z-50 border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <div class="flex items-center">
+                <span class="text-2xl font-black tracking-tight">Service<span class="text-orange-500">Plus</span></span>
+            </div>
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="{{ url_for('index') }}" class="font-medium text-gray-900">Home</a>
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('dashboard') }}" class="font-medium text-gray-600 hover:text-gray-900">Dashboard</a>
+                    <a href="{{ url_for('logout') }}" class="px-4 py-2 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="font-medium text-gray-600 hover:text-gray-900">Login</a>
+                    <a href="{{ url_for('register') }}" class="px-5 py-2 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition shadow-md">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<main class="pt-16">
+    <section class="hero-gradient py-20 md:py-28">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto">
+                <div class="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-1.5 rounded-full shadow-sm mb-6">
+                    <span class="material-symbols-outlined text-orange-500 text-base">verified</span>
+                    <span class="text-xs font-bold uppercase tracking-wider text-gray-700">Trusted by gig professionals</span>
+                </div>
+                <h1 class="text-4xl md:text-6xl font-black tracking-tight text-gray-900 mb-6">
+                    Safety First Booking for <span class="text-orange-500">Gig Workers</span>
+                </h1>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-10">
+                    Secure payments, real-time safety monitoring, and a panic button in your pocket. Join thousands of providers who never worry about non-payment or unsafe jobs.
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('dashboard') }}" class="btn-primary px-8 py-3 rounded-xl font-bold text-center">Go to Dashboard →</a>
+                    {% else %}
+                        <a href="{{ url_for('register') }}" class="btn-primary px-8 py-3 rounded-xl font-bold text-center">Register as Provider</a>
+                        <a href="{{ url_for('register') }}" class="btn-outline px-8 py-3 rounded-xl font-bold text-center">Register as Client</a>
+                        <a href="{{ url_for('login') }}" class="px-8 py-3 rounded-xl font-semibold text-gray-700 hover:bg-gray-100 transition text-center">Login →</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Three Core Features (Simple cards) -->
+    <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900">Everything you need to work safely</h2>
+                <p class="text-gray-500 mt-2">Built for real-world risks – not just convenience</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="feature-card bg-gray-50 rounded-2xl p-8 border border-gray-100">
+                    <span class="material-symbols-outlined text-4xl text-orange-500 mb-4">account_balance_wallet</span>
+                    <h3 class="text-xl font-bold mb-2">Payment Escrow</h3>
+                    <p class="text-gray-600">Funds are held securely and released only after service completion. No more non-payment.</p>
+                </div>
+                <div class="feature-card bg-gray-50 rounded-2xl p-8 border border-gray-100">
+                    <span class="material-symbols-outlined text-4xl text-orange-500 mb-4">emergency</span>
+                    <h3 class="text-xl font-bold mb-2">Panic Button + SOS</h3>
+                    <p class="text-gray-600">One-tap emergency alert with real-time location sharing to authorities and your contacts.</p>
+                </div>
+                <div class="feature-card bg-gray-50 rounded-2xl p-8 border border-gray-100">
+                    <span class="material-symbols-outlined text-4xl text-orange-500 mb-4">verified_user</span>
+                    <h3 class="text-xl font-bold mb-2">Verified Clients</h3>
+                    <p class="text-gray-600">Every client undergoes identity verification before booking – you know who you're meeting.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it works (simple steps) -->
+    <section class="py-16 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-gray-900">How Service Plus works</h2>
+            </div>
+            <div class="grid md:grid-cols-4 gap-6 text-center">
+                <div><span class="inline-block w-12 h-12 bg-black text-white rounded-full leading-[3rem] font-bold text-xl mb-3">1</span><p class="font-medium">Client books & pays (escrow)</p></div>
+                <div><span class="inline-block w-12 h-12 bg-black text-white rounded-full leading-[3rem] font-bold text-xl mb-3">2</span><p class="font-medium">Provider starts job → safety active</p></div>
+                <div><span class="inline-block w-12 h-12 bg-black text-white rounded-full leading-[3rem] font-bold text-xl mb-3">3</span><p class="font-medium">Auto check-ins & panic button on</p></div>
+                <div><span class="inline-block w-12 h-12 bg-black text-white rounded-full leading-[3rem] font-bold text-xl mb-3">4</span><p class="font-medium">Job done → payment released</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA with big buttons -->
+    <section class="py-20 bg-black text-white">
+        <div class="max-w-4xl mx-auto text-center px-4">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4">Ready to work without fear?</h2>
+            <p class="text-gray-300 mb-8">Join the safest platform for mobile service providers.</p>
+            <div class="flex flex-wrap justify-center gap-4">
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('dashboard') }}" class="bg-white text-black px-8 py-3 rounded-xl font-bold hover:bg-gray-100 transition">Dashboard</a>
+                {% else %}
+                    <a href="{{ url_for('register') }}" class="bg-white text-black px-8 py-3 rounded-xl font-bold hover:bg-gray-100 transition">Register as Provider</a>
+                    <a href="{{ url_for('register') }}" class="border-2 border-white px-8 py-3 rounded-xl font-bold hover:bg-white hover:text-black transition">Register as Client</a>
+                    <a href="{{ url_for('login') }}" class="text-gray-300 hover:text-white px-6 py-3 font-medium">Login →</a>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- SOS Floating Button (only for logged-in providers) -->
+{% if current_user.is_authenticated and current_user.role == 'provider' %}
+    <a href="{{ url_for('dashboard') }}#panic" class="fixed bottom-6 right-6 w-14 h-14 bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg sos-button hover:scale-105 transition">
+        <span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">sos</span>
+    </a>
+{% endif %}
+
+<!-- Simple Footer -->
+<footer class="bg-gray-100 py-8 text-center text-gray-500 text-sm">
+    <p>© 2026 Service Plus – Secure Institutional Booking System</p>
+    <p class="mt-1 space-x-4">
+        <a href="#" class="hover:underline">Privacy</a> • 
+        <a href="#" class="hover:underline">Terms</a> • 
+        <a href="#" class="hover:underline">Safety</a>
+    </p>
+</footer>
+
+</body>
+</html>

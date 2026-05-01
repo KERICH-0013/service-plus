@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Alert Sent – Service Plus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .pulse-red {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-red-50">
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center border-4 border-red-500">
+            <div class="text-6xl mb-4 pulse-red">🚨</div>
+            <h1 class="text-3xl font-black text-red-700 mb-2">EMERGENCY ALERT SENT</h1>
+            <div class="w-16 h-1 bg-red-500 mx-auto my-4 rounded-full"></div>
+            <p class="text-gray-700 mb-4">
+                Your distress signal has been successfully transmitted to your emergency contact.
+            </p>
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 text-left">
+                <p class="font-bold text-yellow-800">⚠️ PLEASE WAIT FOR RESCUE</p>
+                <p class="text-sm text-yellow-700 mt-1">Help is on the way. Stay calm and remain at your current location if safe.</p>
+            </div>
+            <div class="text-sm text-gray-500 mb-6">
+                Your emergency contact has been notified via email and WhatsApp with your live location and appointment details.
+            </div>
+            <a href="{{ url_for('dashboard') }}" 
+               class="inline-block bg-black text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition w-full text-center">
+                Return to Dashboard
+            </a>
+        </div>
+    </div>
+</body>
+</html>

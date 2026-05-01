@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Profile – Service Plus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-4xl mx-auto p-6">
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="bg-black text-white px-6 py-4 flex justify-between items-center">
+                <h1 class="text-2xl font-bold">My Profile</h1>
+                <a href="{{ url_for('dashboard') }}" class="text-sm text-gray-300 hover:text-white">← Back</a>
+            </div>
+            <div class="p-6 space-y-4">
+                <div><label class="font-bold">Full name:</label> {{ user.full_name }}</div>
+                <div><label class="font-bold">Email:</label> {{ user.email }}</div>
+                <div><label class="font-bold">Address:</label> {{ user.address or 'Not provided' }}</div>
+                <div><label class="font-bold">Role:</label> {{ user.role|title }}</div>
+                <div><label class="font-bold">Verified:</label> {{ 'Yes' if user.is_verified else 'No' }}</div>
+                <div><label class="font-bold">Emergency contact:</label> {{ user.emergency_contact_name or 'Not set' }} ({{ user.emergency_contact_email or 'No email' }})</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

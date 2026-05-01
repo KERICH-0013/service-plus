@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Upcoming Tasks – Service Plus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #fef3c7;
+            color: #d97706;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<nav class="bg-white shadow-sm fixed top-0 w-full z-50 border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <a href="{{ url_for('dashboard') }}" class="text-2xl font-black">Service<span class="text-orange-500">Plus</span></a>
+            <div class="flex items-center gap-4">
+                <span class="text-sm font-medium">{{ current_user.full_name }}</span>
+                <a href="{{ url_for('logout') }}" class="text-sm text-red-600">Logout</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="pt-20 p-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">Upcoming Tasks (Pending)</h1>
+            <a href="{{ url_for('dashboard') }}" class="text-blue-600 hover:underline">← Back to Dashboard</a>
+        </div>
+
+        {% if bookings %}
+            <div class="grid gap-4">
+                {% for booking in bookings %}
+                <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition">
+                    <div class="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="status-badge">PENDING</span>
+                                <span class="text-sm text-gray-500">Booked {{ booking.created_at.strftime('%Y-%m-%d %H:%M') if booking.created_at else 'Recently' }}</span>
+                            </div>
+                            <p class="font-bold text-lg">{{ booking.service.title if booking.service else 'Service' }}</p>
+                            <p class="text-gray-600">Client: {{ booking.client.full_name if booking.client else 'Unknown' }}</p>
+                            <p class="text-gray-600">Service: {{ booking.service.title }}</p>
+                            <p class="text-gray-600">Address: {{ booking.client.address or 'Not provided' }}</p>
+                            <p class="text-sm text-gray-500">Scheduled: {{ booking.scheduled_time.strftime('%A, %B %d at %I:%M %p') }}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <a href="{{ url_for('update_booking_status', booking_id=booking.id, new_status='active') }}" 
+                               class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                                ▶ Start Session
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="bg-white rounded-xl border border-gray-200 p-12 text-center">
+                <span class="material-symbols-outlined text-5xl text-gray-400">event_busy</span>
+                <p class="mt-2 text-gray-500">No upcoming tasks.</p>
+                <p class="text-sm text-gray-400">When clients book your services, they will appear here.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Incident Management – Service Plus Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-7xl mx-auto p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">🚨 Incident Management</h1>
+            <a href="{{ url_for('admin_dashboard') }}" class="text-blue-600">← Back to Dashboard</a>
+        </div>
+
+        {% if incidents %}
+            <div class="bg-white rounded-xl shadow overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Event Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Booking ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 bg-white">
+                        {% for log, user in incidents %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm">{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td class="px-6 py-4 text-sm">{{ user.full_name }}<br><span class="text-xs text-gray-400">{{ user.email }}</span></td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 text-xs rounded-full 
+                                    {% if log.event_type == 'PANIC' %}bg-red-100 text-red-700
+                                    {% elif log.event_type == 'SESSION_START' %}bg-green-100 text-green-700
+                                    {% elif log.event_type == 'SESSION_COMPLETE' %}bg-blue-100 text-blue-700
+                                    {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                    {{ log.event_type.replace('_', ' ') }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm">#{{ log.booking_id }}</td>
+                            <td class="px-6 py-4 text-sm">{{ log.description }}</td>
+                            <td class="px-6 py-4 text-sm">{{ log.location_info or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="bg-white rounded-xl p-12 text-center text-gray-500">
+                No incidents recorded yet.
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

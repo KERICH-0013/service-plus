@@ -1,0 +1,105 @@
+Date: 30/4/2026
+Time: 22:34
+Phone Number: +254710250577
+Message: Test from Service Plus
+--------------------
+Date: 30/4/2026
+Time: 22:38
+Phone Number: +254735865590
+Message: Test from Service Plus
+--------------------
+Date: 30/4/2026
+Time: 22:47
+Phone Number: +254735865590
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: kerichClient: LabanService: ElectricityScheduled: 2026-04-24 21:40Client Address: NairobiLast known location: Location unknown (no GPS data)Please contact the provider immediately. This alert was sent automatically.
+--------------------
+Date: 30/4/2026
+Time: 22:47
+Phone Number: +254735865590
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: kerichClient: LabanService: ElectricityScheduled: 2026-04-24 21:40Client Address: NairobiLast known location: Location unknown (no GPS data)Please contact the provider immediately. This alert was sent automatically.
+--------------------
+Date: 30/4/2026
+Time: 23:6
+Phone Number: +254735865590
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: kerichClient: LabanService: ElectricityScheduled: 2026-04-24 21:40Client Address: NairobiLast known location: Location unknown (no GPS data)Please contact the provider immediately. This alert was sent automatically.
+--------------------
+Date: 30/4/2026
+Time: 23:9
+Phone Number: +254735865590
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: kerichClient: LabanService: ElectricityScheduled: 2026-04-24 21:40Client Address: NairobiLast known location: Location unknown (no GPS data)Please contact the provider immediately. This alert was sent automatically.
+--------------------
+Date: 30/4/2026
+Time: 23:10
+Phone Number: +254735865590
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: kerichClient: LabanService: ElectricityScheduled: 2026-04-24 21:40Client Address: NairobiLast known location: Location unknown (no GPS data)Please contact the provider immediately. This alert was sent automatically.
+--------------------
+Date: 30/4/2026
+Time: 23:11
+Phone Number: +254735865590
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: kerichClient: LabanService: ElectricityScheduled: 2026-04-24 21:40Client Address: NairobiLast known location: Location unknown (no GPS data)Please contact the provider immediately. This alert was sent automatically.
+--------------------
+Date: 30/4/2026
+Time: 23:12
+Phone Number: +254735865590
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: kerichClient: LabanService: ElectricityScheduled: 2026-04-24 21:40Client Address: NairobiLast known location: Location unknown (no GPS data)Please contact the provider immediately. This alert was sent automatically.
+--------------------
+Date: 30/4/2026
+Time: 23:20
+Phone Number: +254735865590
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: kerichClient: LabanService: ElectricityScheduled: 2026-04-24 21:40Client Address: NairobiLast known location: Location unknown (no GPS data)Please contact the provider immediately. This alert was sent automatically.
+--------------------
+Date: 1/5/2026
+Time: 0:3
+Phone Number: +254735865590
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: kerichClient: LabanService: ElectricityScheduled: 2026-04-24 21:40Client Address: NairobiLast known location: Location unknown (no GPS data)Please contact the provider immediately. This alert was sent automatically.
+--------------------
+Date: 1/5/2026
+Time: 0:19
+Phone Number: +254735865590
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: kerichClient: LabanService: InternetScheduled: 2026-05-07 16:00Client Address: NairobiLast known location: Location unknown (no GPS data)Please contact the provider immediately. This alert was sent automatically.
+--------------------
+Date: 1/5/2026
+Time: 0:28
+Phone Number: +254735865590
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: kerichClient: meService: ElectricityScheduled: 2026-05-16 03:30Client Address: 1234 – 00100,Last known location: Location unknown (no GPS data)Please contact the provider immediately. This alert was sent automatically.
+--------------------
+Date: 1/5/2026
+Time: 0:28
+Phone Number: +254735865590
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: kerichClient: meService: ElectricityScheduled: 2026-05-16 03:30Client Address: 1234 – 00100,Last known location: Location unknown (no GPS data)Please contact the provider immediately. This alert was sent automatically.
+--------------------
+Date: 1/5/2026
+Time: 10:45
+Phone Number: +254735865590
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: kerichClient: meService: ElectricityScheduled: 2026-05-16 03:30Client Address: 1234 – 00100,Last known location: Location unknown (no GPS data)Please contact the provider immediately. This alert was sent automatically.
+--------------------
+Date: 1/5/2026
+Time: 10:48
+Phone Number: +254735865590
+Message: Provider kerich has started the session at:Client: meAddress: 1234 – 00100,Live map: https://www.google.com/maps/search/?api=1&query=1234+–+00100,Service: InternetScheduled: 2026-05-01 16:50:00This is an automatic safety notification – no GPS required.
+--------------------
+Date: 1/5/2026
+Time: 11:9
+Phone Number: +254735865590
+Message: Provider Kerich has started the session at:Client: LabanLocation: Latitude: 48.421099, Longitude: -122.317025Live map: https://www.google.com/maps?q=48.421099,-122.317025Service: Nail techScheduled: 2026-05-15 15:10:00This is an automatic safety notification – real coordinates are included.
+--------------------
+Date: 1/5/2026
+Time: 13:58
+Phone Number: +254735865590
+Message: Provider Kerich has started the session at:Client: LabanLocation: Latitude: 48.421099, Longitude: -122.317025Live map: https://www.google.com/maps?q=48.421099,-122.317025Service: plumbingScheduled: 2026-05-29 13:00:00This is an automatic safety notification – real coordinates are included.
+--------------------
+Date: 1/5/2026
+Time: 13:59
+Phone Number: +254735865590
+Message: Provider Kerich has started the session at:Client: LabanLocation: Latitude: 48.421099, Longitude: -122.317025Live map: https://www.google.com/maps?q=48.421099,-122.317025Service: plumbingScheduled: 2026-05-29 13:00:00This is an automatic safety notification – real coordinates are included.
+--------------------
+Date: 1/5/2026
+Time: 16:1
+Phone Number: +254799572362
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: Laban Kipkoech KerichClient: Laban Kipkoech KerichService: REPAIRScheduled: 2026-05-06 18:40Client Address: 1234 – 00100,Last known location: Location unknown (no GPS data)Please contact the provider immediately. This alert was sent automatically.
+--------------------
+Date: 1/5/2026
+Time: 16:9
+Phone Number: +254799572362
+Message: Provider Laban Kipkoech Kerich has started the session at:Client: kerichLocation: Latitude: 48.421099, Longitude: -122.317025Live map: https://www.google.com/maps?q=48.421099,-122.317025Service: REPAIRScheduled: 2026-05-01 17:00:00This is an automatic safety notification – real coordinates are included.
+--------------------

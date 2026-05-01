@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Services – Service Plus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+
+<nav class="bg-white border-b border-gray-200 fixed top-0 w-full z-50">
+    <div class="px-6 py-3 flex justify-between items-center max-w-7xl mx-auto">
+        <a href="{{ url_for('dashboard') }}" class="text-2xl font-black">Service<span class="text-orange-500">Plus</span></a>
+        <a href="{{ url_for('logout') }}" class="text-sm text-red-600 hover:underline">Logout</a>
+    </div>
+</nav>
+
+<main class="pt-20 p-6 max-w-5xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Your Services</h1>
+        <a href="{{ url_for('add_service') }}" class="bg-black text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-800 transition">+ Add New Service</a>
+    </div>
+
+    {% if services %}
+        <div class="grid gap-4">
+            {% for service in services %}
+            <div class="bg-white rounded-xl border border-gray-200 p-5 flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-lg">{{ service.title }}</h3>
+                    <p class="text-gray-600 text-sm">{{ service.description or "No description" }}</p>
+                    <div class="flex gap-4 mt-2 text-sm">
+                        <span>💰 ${{ "%.2f"|format(service.price) }}</span>
+                        <span>⏱ {{ service.duration_minutes }} min</span>
+                        <span>📂 {{ service.category or "Uncategorized" }}</span>
+                        <span class="{% if service.is_active %}text-green-600{% else %}text-red-500{% endif %}">
+                            {% if service.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <a href="{{ url_for('edit_service', service_id=service.id) }}" class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Edit</a>
+                    <a href="{{ url_for('delete_service', service_id=service.id) }}" onclick="return confirm('Delete this service?')" class="px-3 py-1 bg-red-50 text-red-600 rounded-lg text-sm hover:bg-red-100">Delete</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="bg-white rounded-xl border border-gray-200 p-12 text-center">
+            <span class="material-symbols-outlined text-5xl text-gray-400">add_circle</span>
+            <p class="mt-2 text-gray-500">You haven't added any services yet.</p>
+            <a href="{{ url_for('add_service') }}" class="inline-block mt-4 bg-black text-white px-6 py-2 rounded-lg">Create your first service</a>
+        </div>
+    {% endif %}
+
+    <div class="mt-6">
+        <a href="{{ url_for('dashboard') }}" class="text-gray-600 hover:underline">← Back to Dashboard</a>
+    </div>
+</main>
+</body>
+</html>

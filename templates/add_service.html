@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Service – Service Plus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+
+<nav class="bg-white border-b border-gray-200 fixed top-0 w-full z-50">
+    <div class="px-6 py-3 flex justify-between items-center max-w-7xl mx-auto">
+        <a href="{{ url_for('dashboard') }}" class="text-2xl font-black">Service<span class="text-orange-500">Plus</span></a>
+        <a href="{{ url_for('logout') }}" class="text-sm text-red-600 hover:underline">Logout</a>
+    </div>
+</nav>
+
+<main class="pt-20 p-6 max-w-2xl mx-auto">
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <h1 class="text-2xl font-bold mb-6">Add New Service</h1>
+        <form method="POST">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Service Title *</label>
+                    <input type="text" name="title" required class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Description</label>
+                    <textarea name="description" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Price (USD) *</label>
+                    <input type="number" step="0.01" name="price" required class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Duration (minutes) *</label>
+                    <input type="number" name="duration_minutes" value="60" required class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Category</label>
+                    <input type="text" name="category" placeholder="e.g., Massage, Tutoring" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                </div>
+                <button type="submit" class="bg-black text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-800 transition">Create Service</button>
+            </div>
+        </form>
+    </div>
+    <div class="mt-4 text-center">
+        <a href="{{ url_for('provider_services') }}" class="text-gray-600 hover:underline">← Back to Services</a>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Service Plus – Client Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f8f9ff; }
+        .service-card {
+            transition: all 0.2s ease;
+        }
+        .service-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+        }
+        .stat-card {
+            transition: all 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<!-- Top Navigation Bar -->
+<header class="bg-white border-b border-gray-200 fixed top-0 w-full z-50 shadow-sm">
+    <div class="px-6 py-3 flex justify-between items-center max-w-7xl mx-auto">
+        <span class="text-2xl font-black">Service<span class="text-orange-500">Plus</span></span>
+        <div class="flex items-center gap-4">
+            <a href="{{ url_for('client_profile') }}" class="text-sm text-gray-600 hover:text-black hover:underline">👤 Profile</a>
+            <span class="text-sm font-medium text-gray-700">{{ current_user.full_name }}</span>
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('admin_dashboard') }}" class="bg-gray-800 text-white px-3 py-1 rounded-md hover:bg-gray-700">Admin Panel</a>
+            {% endif %}
+            <a href="{{ url_for('logout') }}" class="text-sm text-red-600 hover:underline">Logout</a>
+        </div>
+    </div>
+</header>
+
+<main class="pt-20 p-6 max-w-7xl mx-auto">
+    <!-- Welcome & Verification Banner -->
+    <div class="bg-gradient-to-r from-black to-gray-800 text-white rounded-2xl p-6 mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-bold">Welcome back, {{ current_user.full_name }}</h1>
+            <p class="text-gray-300 mt-1">Book trusted, verified services safely.</p>
+        </div>
+        {% if not current_user.is_verified %}
+        <a href="{{ url_for('verify_identity') }}" class="bg-yellow-500 text-black px-5 py-2 rounded-full font-bold hover:bg-yellow-400 transition flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">verified</span> Verify ID Now
+        </a>
+        {% else %}
+        <div class="flex items-center gap-2 bg-green-600 px-4 py-2 rounded-full">
+            <span class="material-symbols-outlined text-sm">verified</span>
+            <span class="font-semibold">Identity Verified</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-gray-400 uppercase">Total Bookings</p>
+                    <p class="text-3xl font-black text-gray-800">{{ current_user.bookings_as_client|length }}</p>
+                </div>
+                <span class="material-symbols-outlined text-3xl text-blue-500">book_online</span>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-gray-400 uppercase">Upcoming</p>
+                    <p class="text-3xl font-black text-gray-800">
+                        {{ current_user.bookings_as_client|selectattr("status", "equalto", "pending")|list|length }}
+                    </p>
+                </div>
+                <span class="material-symbols-outlined text-3xl text-green-500">schedule</span>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-gray-400 uppercase">Active Sessions</p>
+                    <p class="text-3xl font-black text-gray-800">
+                        {{ current_user.bookings_as_client|selectattr("status", "equalto", "active")|list|length }}
+                    </p>
+                </div>
+                <span class="material-symbols-outlined text-3xl text-orange-500">monitor_heart</span>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-gray-400 uppercase">Completed</p>
+                    <p class="text-3xl font-black text-gray-800">
+                        {{ current_user.bookings_as_client|selectattr("status", "equalto", "completed")|list|length }}
+                    </p>
+                </div>
+                <span class="material-symbols-outlined text-3xl text-purple-500">check_circle</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Safety Promise Banner -->
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-8 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-blue-600 text-2xl">security</span>
+            <div>
+                <p class="font-bold text-blue-800">Your safety is guaranteed</p>
+                <p class="text-sm text-blue-700">All providers are identity‑verified. Payments held in escrow. 24/7 emergency support.</p>
+            </div>
+        </div>
+        <a href="{{ url_for('support') }}" class="text-blue-700 text-sm font-semibold hover:underline">Learn more →</a>
+    </div>
+
+    <!-- Search / Filter -->
+    <div class="mb-6">
+        <input type="text" id="searchInput" placeholder="🔍 Search by service, provider, or category..." 
+               class="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black">
+    </div>
+
+    <!-- Available Services -->
+    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined">miscellaneous_services</span>
+        Available Services
+    </h2>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="servicesGrid">
+        {% for service in services %}
+        <div class="service-card bg-white rounded-xl border border-gray-200 p-5 shadow-sm transition-all" 
+             data-title="{{ service.title|lower }}" 
+             data-provider="{{ service.provider.full_name|lower }}" 
+             data-category="{{ service.category|lower }}">
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-bold text-xl">
+                        {{ service.provider.full_name[0]|upper }}
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg">{{ service.title }}</h3>
+                        <p class="text-sm text-gray-500">{{ service.provider.full_name }}</p>
+                    </div>
+                </div>
+                <div class="flex flex-col items-end gap-1">
+                    {% if service.provider.is_verified %}
+                    <span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">verified</span> Verified
+                    </span>
+                    {% else %}
+                    <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">Pending</span>
+                    {% endif %}
+                    <span class="text-[10px] text-gray-400 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-xs">shield</span> Escrow protected
+                    </span>
+                </div>
+            </div>
+            
+            <p class="text-gray-600 text-sm mb-3 line-clamp-2">{{ service.description or "No description provided." }}</p>
+            
+            <div class="flex justify-between items-center mb-3">
+                <div>
+                    <p class="text-xs text-gray-500">Price</p>
+                    <p class="font-bold text-xl">${{ "%.2f"|format(service.price) }}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500">Duration</p>
+                    <p class="font-medium">{{ service.duration_minutes }} min</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500">Category</p>
+                    <p class="font-medium">{{ service.category or "General" }}</p>
+                </div>
+            </div>
+            
+            <form method="POST" action="{{ url_for('book_service', service_id=service.id) }}" class="mt-3">
+                <label class="block text-xs font-medium text-gray-700 mb-1">Select Date & Time</label>
+                <input type="datetime-local" name="scheduled_time" required 
+                       class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm mb-2 focus:ring-2 focus:ring-black">
+                <button type="submit" class="w-full bg-black text-white py-2 rounded-lg font-semibold hover:bg-gray-800 transition">
+                    Book Now →
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <div class="col-span-full text-center py-12 bg-gray-50 rounded-lg">
+            <span class="material-symbols-outlined text-5xl text-gray-400"></span>
+            <p class="text-gray-500 mt-2">No services available yet.</p>
+            <p class="text-sm text-gray-400">Check back later – providers are joining daily.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- My Bookings Section ->
+    <h2 class="text-xl font-bold mt-10 mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined">calendar_today</span>
+        My Bookings
+    </h2>
+    <div class="space-y-3">
+        {% for booking in current_user.bookings_as_client %}
+        <div class="bg-white border border-gray-200 rounded-lg p-4 flex flex-col md:flex-row md:justify-between md:items-center gap-3">
+            <div class="flex-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-bold">{{ booking.service.title if booking.service else "Service" }}</span>
+                    <span class="text-xs text-gray-500">with {{ booking.provider.full_name }}</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full 
+                        {% if booking.status == 'pending' %}bg-yellow-100 text-yellow-700
+                        {% elif booking.status == 'confirmed' %}bg-blue-100 text-blue-700
+                        {% elif booking.status == 'active' %}bg-purple-100 text-purple-700
+                        {% elif booking.status == 'completed' %}bg-green-100 text-green-700
+                        {% else %}bg-gray-100 text-gray-700{% endif %}">
+                        {{ booking.status|upper }}
+                    </span>
+                </div>
+                <p class="text-sm text-gray-600 mt-1">
+                    📅 {{ booking.scheduled_time.strftime('%A, %B %d at %I:%M %p') if booking.scheduled_time else "Date TBD" }}
+                </p>
+                <p class="text-xs text-gray-500 mt-1">💰 ${{ "%.2f"|format(booking.service.price) if booking.service else '0.00' }}</p>
+                
+                <!-- Payment status and authorization link -->
+                <div class="mt-1 flex items-center gap-2 flex-wrap">
+                    <p class="text-xs text-gray-500">
+                        💳 Payment: 
+                        {% if booking.payment %}
+                            {{ booking.payment.status|upper }}
+                            {% if booking.payment.status == 'authorized' %}
+                                (Reserved)
+                            {% elif booking.payment.status == 'captured' %}
+                                (Completed)
+                            {% endif %}
+                        {% else %}
+                            Not yet authorized
+                        {% endif %}
+                    </p>
+                    {% if not booking.payment or booking.payment.status == 'pending' %}
+                        <a href="{{ url_for('payment_page', booking_id=booking.id) }}" class="text-blue-600 text-xs hover:underline">Authorize payment</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-xs text-gray-400">Booked on {{ booking.created_at.strftime('%b %d, %Y') }}</p>
+                {% if booking.status == 'active' %}
+                <p class="text-xs text-green-600 mt-1">🔴 Live location sharing active</p>
+                {% endif %}
+                {% if booking.status == 'pending' %}
+                <a href="#" class="text-red-500 text-xs hover:underline">Cancel request</a>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-gray-50 rounded-lg p-8 text-center">
+            <span class="material-symbols-outlined text-4xl text-gray-400">event_busy</span>
+            <p class="text-gray-500 mt-2">No bookings yet.</p>
+            <p class="text-sm text-gray-400">Book a service above to get started.</p>
+        </div>
+        {% endfor %}
+    </div>
+</main>
+
+<!-- Footer -->
+<footer class="bg-gray-100 text-center text-sm text-gray-500 py-6 mt-12">
+    <p>© 2026 Service Plus – Secure Institutional Booking System</p>
+    <p class="text-xs mt-1">All sessions include escrow protection, panic button, and live location sharing.</p>
+</footer>
+
+<!-- Search filter script -->
+<script>
+    const searchInput = document.getElementById('searchInput');
+    const serviceCards = document.querySelectorAll('#servicesGrid .service-card');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const term = this.value.toLowerCase();
+            serviceCards.forEach(card => {
+                const title = card.getAttribute('data-title') || '';
+                const provider = card.getAttribute('data-provider') || '';
+                const category = card.getAttribute('data-category') || '';
+                if (title.includes(term) || provider.includes(term) || category.includes(term)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+</script>
+</body>
+</html>
