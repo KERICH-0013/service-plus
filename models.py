@@ -95,9 +95,16 @@ class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     booking_id = db.Column(db.Integer, db.ForeignKey('bookings.id'), nullable=False, unique=True)
     amount = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(20), default='pending')   # pending, authorized, captured, refunded
+    status = db.Column(db.String(20), default='pending')   # pending, authorized, captured, failed
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     captured_at = db.Column(db.DateTime, nullable=True)
+
+    # M‑Pesa specific fields
+    checkout_request_id = db.Column(db.String(100), nullable=True)   # from STK push response
+    mpesa_receipt_number = db.Column(db.String(50), nullable=True)
+    phone_number = db.Column(db.String(20), nullable=True)
+    result_code = db.Column(db.Integer, nullable=True)
+    result_desc = db.Column(db.String(200), nullable=True)
 
     booking = db.relationship('Booking', back_populates='payment')
 
@@ -163,11 +170,11 @@ class AuditLog(db.Model):
     __tablename__ = 'audit_logs'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)   # provider who owns the log
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     booking_id = db.Column(db.Integer, db.ForeignKey('bookings.id'), nullable=True)
-    event_type = db.Column(db.String(50), nullable=False)   # e.g., 'PANIC', 'SESSION_START', 'SESSION_COMPLETE', 'LOCATION_ALERT'
+    event_type = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    location_info = db.Column(db.String(200), nullable=True)  # coordinates or address
+    location_info = db.Column(db.String(200), nullable=True)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
 
     user = db.relationship('User', backref='audit_logs')

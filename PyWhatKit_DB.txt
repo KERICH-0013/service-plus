@@ -103,3 +103,13 @@ Time: 16:9
 Phone Number: +254799572362
 Message: Provider Laban Kipkoech Kerich has started the session at:Client: kerichLocation: Latitude: 48.421099, Longitude: -122.317025Live map: https://www.google.com/maps?q=48.421099,-122.317025Service: REPAIRScheduled: 2026-05-01 17:00:00This is an automatic safety notification – real coordinates are included.
 --------------------
+Date: 2/5/2026
+Time: 11:41
+Phone Number: +254799572362
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: Laban13Client: me13Service: paintingScheduled: 2026-05-02 14:30Client Address: 1234 – 00100,Last known location: Location unknown (no GPS data)Please contact the provider immediately.
+--------------------
+Date: 2/5/2026
+Time: 11:51
+Phone Number: +254710250577
+Message: Provider Laban13 has started the session at:Client: me13Location: Latitude: 48.421099, Longitude: -122.317025Live map: https://www.google.com/maps?q=48.421099,-122.317025Service: laptop repairScheduled: 2026-05-09 12:00:00This is an automatic safety notification – real coordinates are included.
+--------------------

@@ -29,6 +29,7 @@
         .status-pending { background: #fef3c7; color: #d97706; }
         .status-active { background: #dcfce7; color: #16a34a; }
         .status-completed { background: #e0e7ff; color: #4338ca; }
+        .status-confirmed { background: #dbeafe; color: #1e40af; }   /* NEW for confirmed status */
     </style>
 </head>
 <body class="bg-gray-50">
@@ -88,7 +89,7 @@
 <!-- Main Content -->
 <main class="md:ml-64 pt-20 p-4 md:p-6">
     <div class="max-w-6xl mx-auto">
-        <!-- Stats Cards -->
+        <!-- Stats Cards (unchanged) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
             <!-- Safety Score -->
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200 p-5">
@@ -153,7 +154,7 @@
             </div>
         </div>
 
-        <!-- Ongoing Session Card -->
+        <!-- Ongoing Session Card (unchanged) -->
         {% if bookings|selectattr("status", "equalto", "active")|list %}
             {% set active = bookings|selectattr("status", "equalto", "active")|first %}
             <div class="bg-black text-white rounded-xl overflow-hidden mb-6 shadow-lg">
@@ -229,8 +230,10 @@
                         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                             <div class="flex-1">
                                 <div class="flex items-center gap-2 flex-wrap">
+                                    <!-- Updated badge to show 'confirmed' status properly -->
                                     <span class="status-badge 
                                         {% if booking.status == 'pending' %}status-pending
+                                        {% elif booking.status == 'confirmed' %}status-confirmed
                                         {% elif booking.status == 'active' %}status-active
                                         {% else %}status-completed{% endif %}">
                                         {{ booking.status|upper }}
@@ -251,7 +254,8 @@
                                 {% endif %}
                             </div>
                             <div class="flex gap-2">
-                                {% if booking.status == 'pending' %}
+                                <!-- Start Session button now shows for both 'pending' AND 'confirmed' -->
+                                {% if booking.status == 'pending' or booking.status == 'confirmed' %}
                                     <a href="{{ url_for('update_booking_status', booking_id=booking.id, new_status='active') }}" 
                                        class="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition">
                                         ▶ Start Session
@@ -283,7 +287,7 @@
             {% endif %}
         </div>
 
-        <!-- Quick Action: Manage Services Card -->
+        <!-- Quick Action: Manage Services Card (unchanged) -->
         <div class="mt-6 p-4 bg-white border border-gray-200 rounded-lg shadow-sm flex justify-between items-center">
             <div class="flex items-center gap-3">
                 <span class="material-symbols-outlined text-2xl text-orange-500">add_circle</span>
@@ -295,7 +299,7 @@
             <a href="{{ url_for('provider_services') }}" class="px-4 py-2 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition">Manage Services →</a>
         </div>
 
-        <!-- Safety Reminder -->
+        <!-- Safety Reminder (unchanged) -->
         <div class="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
             <div class="flex gap-3">
                 <span class="material-symbols-outlined text-orange-600">security</span>
@@ -308,14 +312,14 @@
     </div>
 </main>
 
-<!-- Mobile floating panic button -->
+<!-- Mobile floating panic button (unchanged) -->
 <div class="md:hidden fixed bottom-20 right-4 z-50">
     <button onclick="alert('🚨 EMERGENCY ALERT TRIGGERED!')" class="w-14 h-14 bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg sos-pulse">
         <span class="material-symbols-outlined text-2xl">sos</span>
     </button>
 </div>
 
-<!-- Mobile bottom nav -->
+<!-- Mobile bottom nav (unchanged) -->
 <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around py-2 z-40">
     <a href="#" class="flex flex-col items-center text-black"><span class="material-symbols-outlined">dashboard</span><span class="text-xs">Home</span></a>
     <a href="#" class="flex flex-col items-center text-gray-500"><span class="material-symbols-outlined">monitor_heart</span><span class="text-xs">Sessions</span></a>
@@ -323,14 +327,11 @@
     <a href="#" class="flex flex-col items-center text-gray-500"><span class="material-symbols-outlined">person</span><span class="text-xs">Profile</span></a>
 </nav>
 
-<!-- Location Tracking Script (only runs when an active booking exists) -->
+<!-- Location Tracking Script (unchanged) -->
 <script>
     // Only start location tracking if there is an active booking
     {% if bookings|selectattr("status", "equalto", "active")|list %}
-        // Get the active booking ID (the 'active' variable is defined earlier)
         const bookingId = {{ active.id }};
-
-        // Function to get current position and send it to the server
         function sendLocation() {
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(function(position) {
@@ -367,10 +368,7 @@
                 }
             }
         }
-
-        // Send location immediately when dashboard loads
         sendLocation();
-        // Then repeat every 30 seconds
         setInterval(sendLocation, 30000);
     {% endif %}
 </script>

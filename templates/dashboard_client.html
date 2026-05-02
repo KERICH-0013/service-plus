@@ -118,6 +118,40 @@
         <a href="{{ url_for('support') }}" class="text-blue-700 text-sm font-semibold hover:underline">Learn more →</a>
     </div>
 
+    <!-- Payment Verification Status Card (uses M‑Pesa) -->
+    <div class="bg-white rounded-xl border border-gray-200 p-5 mb-8 shadow-sm">
+        <h2 class="font-bold text-lg mb-3">💰 Payment Status</h2>
+        {% for booking in current_user.bookings_as_client %}
+            {% if booking.payment %}
+                <div class="flex justify-between items-center border-b pb-2 mb-2 last:border-0">
+                    <div>
+                        <span class="font-medium">{{ booking.service.title }}</span>
+                        <span class="text-sm text-gray-500 ml-2">({{ booking.status }})</span>
+                    </div>
+                    <div>
+                        {% if booking.payment.status == 'pending' %}
+                            <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs">Pending</span>
+                            <a href="{{ url_for('mpesa_payment_page', booking_id=booking.id) }}" class="text-blue-600 text-xs ml-2">Pay Now</a>
+                        {% elif booking.payment.status == 'authorized' %}
+                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">✅ Verified (Funds Reserved)</span>
+                        {% elif booking.payment.status == 'captured' %}
+                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">✅ Captured</span>
+                        {% elif booking.payment.status == 'failed' %}
+                            <span class="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">Failed – Retry</span>
+                            <a href="{{ url_for('mpesa_payment_page', booking_id=booking.id) }}" class="text-blue-600 text-xs ml-2">Retry</a>
+                        {% else %}
+                            <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-xs">Unknown</span>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <p class="text-gray-500 text-sm">No payment records yet.</p>
+            {% endif %}
+        {% else %}
+            <p class="text-gray-500 text-sm">No bookings with payment records.</p>
+        {% endfor %}
+    </div>
+
     <!-- Search / Filter -->
     <div class="mb-6">
         <input type="text" id="searchInput" placeholder="🔍 Search by service, provider, or category..." 
@@ -126,7 +160,7 @@
 
     <!-- Available Services -->
     <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-        <span class="material-symbols-outlined">miscellaneous_services</span>
+        <span class="material-symbols-outlined"></span>
         Available Services
     </h2>
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="servicesGrid">
@@ -187,14 +221,14 @@
         </div>
         {% else %}
         <div class="col-span-full text-center py-12 bg-gray-50 rounded-lg">
-            <span class="material-symbols-outlined text-5xl text-gray-400"></span>
+            <span class="material-symbols-outlined text-5xl text-gray-400">miscellaneous_services</span>
             <p class="text-gray-500 mt-2">No services available yet.</p>
             <p class="text-sm text-gray-400">Check back later – providers are joining daily.</p>
         </div>
         {% endfor %}
     </div>
 
-    <!-- My Bookings Section ->
+    <!-- My Bookings Section (with M‑Pesa link) -->
     <h2 class="text-xl font-bold mt-10 mb-4 flex items-center gap-2">
         <span class="material-symbols-outlined">calendar_today</span>
         My Bookings
@@ -220,7 +254,7 @@
                 </p>
                 <p class="text-xs text-gray-500 mt-1">💰 ${{ "%.2f"|format(booking.service.price) if booking.service else '0.00' }}</p>
                 
-                <!-- Payment status and authorization link -->
+                <!-- Payment status and M‑Pesa payment link -->
                 <div class="mt-1 flex items-center gap-2 flex-wrap">
                     <p class="text-xs text-gray-500">
                         💳 Payment: 
@@ -236,7 +270,7 @@
                         {% endif %}
                     </p>
                     {% if not booking.payment or booking.payment.status == 'pending' %}
-                        <a href="{{ url_for('payment_page', booking_id=booking.id) }}" class="text-blue-600 text-xs hover:underline">Authorize payment</a>
+                        <a href="{{ url_for('mpesa_payment_page', booking_id=booking.id) }}" class="text-blue-600 text-xs hover:underline">Pay with M‑Pesa</a>
                     {% endif %}
                 </div>
             </div>

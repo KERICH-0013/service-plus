@@ -16,6 +16,10 @@ import pywhatkit as kit
 import pyautogui
 import requests
 
+# For M‑Pesa Daraja
+import base64
+import json
+
 load_dotenv()
 
 from config import DevelopmentConfig
@@ -238,7 +242,7 @@ def dashboard():
         services_count = Service.query.filter_by(provider_id=current_user.id).count()
         return render_template('dashboard_provider.html', bookings=bookings, services_count=services_count)
 
-# -------------------- Client: Book a service (UPDATED: no redirect to payment) --------------------
+# -------------------- Client: Book a service (redirect to M‑Pesa payment) --------------------
 @app.route('/book_service/<int:service_id>', methods=['POST'])
 @login_required
 def book_service(service_id):
@@ -272,41 +276,179 @@ def book_service(service_id):
     )
     db.session.add(booking)
     db.session.commit()
-    flash(f'Booking request sent to {service.provider.full_name} for "{service.title}". Please authorize payment from your dashboard.', 'success')
-    return redirect(url_for('dashboard'))
+    flash(f'Booking request sent to {service.provider.full_name} for "{service.title}". Please complete payment.', 'success')
+    return redirect(url_for('mpesa_payment_page', booking_id=booking.id))
 
-# -------------------- Payment Escrow System (Stripe‑like) --------------------
-@app.route('/payment/<int:booking_id>')
+# -------------------- M‑Pesa Daraja STK Push --------------------
+@app.route('/mpesa-payment/<int:booking_id>')
 @login_required
-def payment_page(booking_id):
+def mpesa_payment_page(booking_id):
     booking = Booking.query.get_or_404(booking_id)
     if current_user.id != booking.client_id:
         flash('Unauthorized', 'danger')
         return redirect(url_for('dashboard'))
-    if booking.payment and booking.payment.status != 'pending':
+    if booking.payment and booking.payment.status in ['authorized', 'captured']:
         flash('Payment already processed.', 'warning')
         return redirect(url_for('dashboard'))
-    return render_template('payment.html', booking=booking)
+    return render_template('mpesa_payment.html', booking=booking)
 
-@app.route('/authorize-payment/<int:booking_id>', methods=['POST'])
+@app.route('/initiate-mpesa-payment/<int:booking_id>', methods=['POST'])
 @login_required
-def authorize_payment(booking_id):
+def initiate_mpesa_payment(booking_id):
     booking = Booking.query.get_or_404(booking_id)
     if current_user.id != booking.client_id:
         flash('Unauthorized', 'danger')
         return redirect(url_for('dashboard'))
 
-    if booking.payment:
-        payment = booking.payment
+    phone = request.form.get('phone')
+    if not phone:
+        flash('Phone number is required', 'danger')
+        return redirect(url_for('mpesa_payment_page', booking_id=booking.id))
+
+    # Format phone number
+    phone = re.sub(r'\D', '', phone)
+    if phone.startswith('0'):
+        phone = '254' + phone[1:]
+    elif not phone.startswith('254'):
+        phone = '254' + phone
+
+    amount = int(booking.service.price)
+    shortcode = os.environ.get('DARAJA_API_SHORT_CODE', '174379')
+    passkey = os.environ.get('DARAJA_API_PASS_KEY', 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919')
+    
+    # UPDATED: Use ngrok public URL for callback (replace with your current ngrok URL)
+    callback_url = 'https://dose-broadly-rigor.ngrok-free.dev/mpesa-callback'
+
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    password_str = shortcode + passkey + timestamp
+    password = base64.b64encode(password_str.encode()).decode()
+
+    payload = {
+        "BusinessShortCode": shortcode,
+        "Password": password,
+        "Timestamp": timestamp,
+        "TransactionType": "CustomerPayBillOnline",
+        "Amount": amount,
+        "PartyA": phone,
+        "PartyB": shortcode,
+        "PhoneNumber": phone,
+        "CallBackURL": callback_url,
+        "AccountReference": f"Booking{booking.id}",
+        "TransactionDesc": f"Payment for {booking.service.title}"
+    }
+
+    # Get access token
+    auth_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+    consumer_key = os.environ.get('DARAJA_API_CONSUMER_KEY')
+    consumer_secret = os.environ.get('DARAJA_API_CONSUMER_SECRET')
+    credentials = base64.b64encode(f"{consumer_key}:{consumer_secret}".encode()).decode()
+    headers = {
+        "Authorization": f"Basic {credentials}",
+        "Content-Type": "application/json"
+    }
+    try:
+        auth_response = requests.get(auth_url, headers=headers)
+        auth_response.raise_for_status()
+        access_token = auth_response.json()['access_token']
+    except Exception as e:
+        flash('Payment service unavailable. Please try again later.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    stk_url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+    stk_headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    try:
+        stk_response = requests.post(stk_url, json=payload, headers=stk_headers)
+        stk_response.raise_for_status()
+        result = stk_response.json()
+    except Exception as e:
+        flash('Failed to initiate payment. Please try again.', 'danger')
+        return redirect(url_for('mpesa_payment_page', booking_id=booking.id))
+
+    if result.get('ResponseCode') == '0':
+        if booking.payment:
+            payment = booking.payment
+        else:
+            payment = Payment(booking_id=booking.id, amount=booking.service.price)
+            db.session.add(payment)
+        payment.status = 'pending'
+        payment.checkout_request_id = result.get('CheckoutRequestID')
+        payment.phone_number = phone
+        db.session.commit()
+
+        flash('M‑Pesa STK push sent! Check your phone and enter your PIN to complete payment.', 'info')
+        return redirect(url_for('mpesa_payment_status', booking_id=booking.id))
     else:
-        payment = Payment(booking_id=booking.id, amount=booking.service.price)
-        db.session.add(payment)
+        flash(f'Payment initiation failed: {result.get("errorMessage", "Unknown error")}', 'danger')
+        return redirect(url_for('mpesa_payment_page', booking_id=booking.id))
 
-    payment.status = 'authorized'
-    db.session.commit()
+@app.route('/mpesa-callback', methods=['POST'])
+def mpesa_callback():
+    data = request.get_json()
+    if not data:
+        return 'Invalid request', 400
 
-    flash('Payment authorized! Funds are now held in escrow. The provider will capture after service completion.', 'success')
-    return redirect(url_for('dashboard'))
+    stk_callback = data.get('Body', {}).get('stkCallback', {})
+    result_code = stk_callback.get('ResultCode')
+    result_desc = stk_callback.get('ResultDesc')
+    checkout_request_id = stk_callback.get('CheckoutRequestID')
+
+    payment = Payment.query.filter_by(checkout_request_id=checkout_request_id).first()
+    if not payment:
+        return 'Payment record not found', 404
+
+    payment.result_code = result_code
+    payment.result_desc = result_desc
+
+    if result_code == 0:
+        metadata = stk_callback.get('CallbackMetadata', {}).get('Item', [])
+        metadata_dict = {item['Name']: item.get('Value') for item in metadata}
+        payment.status = 'authorized'
+        payment.captured_at = datetime.utcnow()
+        payment.mpesa_receipt_number = metadata_dict.get('MpesaReceiptNumber')
+        db.session.commit()
+
+        booking = payment.booking
+        if booking:
+            booking.status = 'confirmed'
+            db.session.commit()
+    else:
+        payment.status = 'failed'
+        db.session.commit()
+
+    return 'OK', 200
+
+@app.route('/mpesa-payment-status/<int:booking_id>')
+@login_required
+def mpesa_payment_status(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+    if current_user.id != booking.client_id:
+        flash('Unauthorized', 'danger')
+        return redirect(url_for('dashboard'))
+    payment = booking.payment
+    return render_template('mpesa_payment_status.html', booking=booking, payment=payment)
+
+# -------------------- API: Payment Status for Polling --------------------
+@app.route('/api/payment-status/<int:booking_id>')
+@login_required
+def api_payment_status(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+    if current_user.id != booking.client_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    payment = booking.payment
+    if not payment:
+        return jsonify({'status': 'pending', 'amount': booking.service.price})
+    
+    return jsonify({
+        'status': payment.status,
+        'amount': payment.amount,
+        'mpesa_receipt_number': payment.mpesa_receipt_number,
+        'result_desc': payment.result_desc,
+        'captured_at': payment.captured_at.isoformat() if payment.captured_at else None
+    })
 
 # -------------------- Provider: Manage Services --------------------
 @app.route('/provider/services')
@@ -375,7 +517,7 @@ def delete_service(service_id):
     flash('Service deleted', 'success')
     return redirect(url_for('provider_services'))
 
-# -------------------- Booking Status Management (with payment capture) --------------------
+# -------------------- Booking Status Management (with payment capture and validation) --------------------
 @app.route('/booking/status/<int:booking_id>/<string:new_status>')
 @login_required
 def update_booking_status(booking_id, new_status):
@@ -387,7 +529,11 @@ def update_booking_status(booking_id, new_status):
         flash('Invalid status', 'danger')
         return redirect(url_for('dashboard'))
 
-    old_status = booking.status
+    # --- Only allow 'active' if the old status is pending or confirmed ---
+    if new_status == 'active' and booking.status not in ['pending', 'confirmed']:
+        flash('Cannot start session – booking not in a valid state.', 'danger')
+        return redirect(url_for('dashboard'))
+
     booking.status = new_status
     db.session.commit()
     flash(f'Booking marked as {new_status}', 'success')
@@ -402,10 +548,8 @@ def update_booking_status(booking_id, new_status):
                        description=f"Session marked as completed")
         db.session.add(log)
         db.session.commit()
-
         if booking.payment and booking.payment.status == 'authorized':
             booking.payment.status = 'captured'
-            booking.payment.captured_at = datetime.utcnow()
             db.session.commit()
             flash('Payment captured successfully!', 'success')
 
@@ -413,7 +557,6 @@ def update_booking_status(booking_id, new_status):
         provider = booking.provider
         emergency_email = provider.emergency_contact_email
         emergency_phone = provider.emergency_contact_phone
-
         if emergency_email or emergency_phone:
             client = booking.client
             lat = client.latitude
@@ -425,19 +568,15 @@ def update_booking_status(booking_id, new_status):
                 client_address = client.address or "Address not provided"
                 location_str = client_address
                 maps_link = f"https://www.google.com/maps/search/?api=1&query={client_address.replace(' ', '+')}"
-
             subject = "📍 SERVICE PLUS - Session Started (Live Location)"
-            body = f"""
-Provider {provider.full_name} has started the session at:
+            body = f"""Provider {provider.full_name} has started the session at:
 Client: {booking.client.full_name}
 Location: {location_str}
 Live map: {maps_link}
 Service: {booking.service.title}
 Scheduled: {booking.scheduled_time}
-This is an automatic safety notification – real coordinates are included.
-"""
+This is an automatic safety notification – real coordinates are included."""
             send_emergency_alerts(emergency_email, emergency_phone, subject, body)
-            print(f"Session start alert sent to {emergency_email or emergency_phone} with location {location_str}")
 
     return redirect(url_for('dashboard'))
 
@@ -451,64 +590,28 @@ def emergency_sent():
 @app.route('/panic/<int:booking_id>', methods=['POST'])
 @login_required
 def panic_trigger(booking_id):
-    print("=== PANIC BUTTON CLICKED ===")
-    print(f"Booking ID: {booking_id}")
-
     booking = Booking.query.get_or_404(booking_id)
-    print(f"Booking found: {booking.id}, status {booking.status}")
-
     if current_user.id != booking.provider_id:
         flash('Unauthorized', 'danger')
-        print("Unauthorized: current_user.id", current_user.id, "provider_id", booking.provider_id)
         return redirect(url_for('dashboard'))
 
     provider = booking.provider
-    print(f"Provider: {provider.full_name}, email: {provider.email}")
     emergency_email = provider.emergency_contact_email
     emergency_phone = provider.emergency_contact_phone
-    emergency_name = provider.emergency_contact_name or "Emergency Contact"
-
-    print(f"Emergency email: {emergency_email}")
-    print(f"Emergency phone: {emergency_phone}")
-
     if not emergency_email and not emergency_phone:
         flash('⚠️ No emergency contact email or phone set. Please update your profile first.', 'warning')
-        print("No contact details, redirecting to profile")
         return redirect(url_for('profile'))
 
     last_loc = SafetyLog.query.filter_by(booking_id=booking.id, is_panic=False).order_by(SafetyLog.timestamp.desc()).first()
     location_msg = f"Lat: {last_loc.latitude}, Lng: {last_loc.longitude}" if last_loc else "Location unknown (no GPS data)"
-    print(f"Location: {location_msg}")
 
     subject = "🚨 SERVICE PLUS - EMERGENCY PANIC ALERT"
-    body = f"""
-EMERGENCY PANIC BUTTON TRIGGERED
-
-Provider: {provider.full_name}
-Client: {booking.client.full_name}
-Service: {booking.service.title}
-Scheduled: {booking.scheduled_time.strftime('%Y-%m-%d %H:%M')}
-Client Address: {booking.client.address or 'Not provided'}
-Last known location: {location_msg}
-
-Please contact the provider immediately. This alert was sent automatically.
-    """
-
+    body = f"""EMERGENCY PANIC BUTTON TRIGGERED\n\nProvider: {provider.full_name}\nClient: {booking.client.full_name}\nService: {booking.service.title}\nScheduled: {booking.scheduled_time.strftime('%Y-%m-%d %H:%M')}\nClient Address: {booking.client.address or 'Not provided'}\nLast known location: {location_msg}\n\nPlease contact the provider immediately."""
     alerts_sent = send_emergency_alerts(emergency_email, emergency_phone, subject, body)
 
-    log = SafetyLog(
-        booking_id=booking.id,
-        user_id=current_user.id,
-        is_panic=True,
-        message='Panic button triggered by provider'
-    )
+    log = SafetyLog(booking_id=booking.id, user_id=current_user.id, is_panic=True, message='Panic button triggered by provider')
     db.session.add(log)
-    db.session.commit()
-    print("Panic event logged")
-
-    audit = AuditLog(user_id=current_user.id, booking_id=booking.id, event_type='PANIC',
-                     description=f"Panic button triggered – emergency contact notified",
-                     location_info=location_msg)
+    audit = AuditLog(user_id=current_user.id, booking_id=booking.id, event_type='PANIC', description="Panic button triggered – emergency contact notified", location_info=location_msg)
     db.session.add(audit)
     db.session.commit()
 
@@ -518,7 +621,7 @@ Please contact the provider immediately. This alert was sent automatically.
         flash('⚠️ Could not send email. Support has been notified.', 'warning')
         return redirect(url_for('dashboard'))
 
-# -------------------- Active Sessions Page --------------------
+# -------------------- Active Sessions, Upcoming Tasks, Audit Logs, Location Update --------------------
 @app.route('/active-sessions')
 @login_required
 def active_sessions():
@@ -528,7 +631,6 @@ def active_sessions():
     active_bookings = Booking.query.filter_by(provider_id=current_user.id, status='active').all()
     return render_template('active_sessions.html', bookings=active_bookings)
 
-# -------------------- Upcoming Tasks Page --------------------
 @app.route('/upcoming-tasks')
 @login_required
 def upcoming_tasks():
@@ -538,7 +640,6 @@ def upcoming_tasks():
     pending_bookings = Booking.query.filter_by(provider_id=current_user.id, status='pending').all()
     return render_template('upcoming_tasks.html', bookings=pending_bookings)
 
-# -------------------- Audit Logs Page --------------------
 @app.route('/audit-logs')
 @login_required
 def audit_logs():
@@ -548,43 +649,31 @@ def audit_logs():
     logs = AuditLog.query.filter_by(user_id=current_user.id).order_by(AuditLog.created_at.desc()).all()
     return render_template('audit_logs.html', logs=logs)
 
-# -------------------- Location Update (with audit log for periodic alerts) --------------------
 @app.route('/api/location/<int:booking_id>', methods=['POST'])
 @login_required
 def update_location(booking_id):
     booking = Booking.query.get_or_404(booking_id)
     if current_user.id != booking.provider_id:
         return jsonify({'error': 'Unauthorized'}), 403
-
     data = request.get_json()
     lat = data.get('latitude')
     lng = data.get('longitude')
     if lat and lng:
-        log = SafetyLog(
-            booking_id=booking.id,
-            user_id=current_user.id,
-            latitude=lat,
-            longitude=lng,
-            is_panic=False
-        )
+        log = SafetyLog(booking_id=booking.id, user_id=current_user.id, latitude=lat, longitude=lng, is_panic=False)
         db.session.add(log)
         db.session.commit()
-
         if booking.status == 'active':
             provider = booking.provider
             emergency_email = provider.emergency_contact_email
             emergency_phone = provider.emergency_contact_phone
-
             entry = LocationNotificationLog.query.filter_by(booking_id=booking.id).first()
             if not entry:
                 entry = LocationNotificationLog(booking_id=booking.id)
                 db.session.add(entry)
                 db.session.commit()
-
             now = datetime.utcnow()
             time_since_last = (now - entry.last_notification_time).total_seconds() if entry.last_notification_time else 301
             send_now = (entry.notification_count == 0) or (time_since_last >= 300)
-
             if send_now and (emergency_email or emergency_phone):
                 client = booking.client
                 if client.latitude and client.longitude:
@@ -594,19 +683,9 @@ def update_location(booking_id):
                     client_address = client.address or "Address not provided"
                     loc_str = client_address
                     maps_link = f"https://www.google.com/maps/search/?api=1&query={client_address.replace(' ', '+')}"
-
                 subject = "📍 SERVICE PLUS - Provider Location Update"
-                body = f"""
-Provider {provider.full_name} is on site at:
-Client: {booking.client.full_name}
-Location: {loc_str}
-Live map: {maps_link}
-Service: {booking.service.title}
-Scheduled: {booking.scheduled_time}
-This is an automatic safety update – coordinates are based on the client's registered address.
-"""
+                body = f"""Provider {provider.full_name} is on site at:\nClient: {booking.client.full_name}\nLocation: {loc_str}\nLive map: {maps_link}\nService: {booking.service.title}\nScheduled: {booking.scheduled_time}\nThis is an automatic safety update."""
                 send_emergency_alerts(emergency_email, emergency_phone, subject, body)
-
                 entry.last_notification_time = now
                 entry.notification_count += 1
                 entry.last_latitude = client.latitude
@@ -614,15 +693,10 @@ This is an automatic safety update – coordinates are based on the client's reg
                 entry.last_emergency_email = emergency_email
                 entry.last_emergency_phone = emergency_phone
                 db.session.commit()
-
-                audit = AuditLog(user_id=provider.id, booking_id=booking.id, event_type='LOCATION_ALERT',
-                                 description=f"Periodic location update sent to emergency contact",
-                                 location_info=loc_str)
+                audit = AuditLog(user_id=provider.id, booking_id=booking.id, event_type='LOCATION_ALERT', description="Periodic location update sent to emergency contact", location_info=loc_str)
                 db.session.add(audit)
                 db.session.commit()
-
         return jsonify({'status': 'ok'}), 200
-
     return jsonify({'error': 'Invalid coordinates'}), 400
 
 # -------------------- User Profile (Emergency Contact + Address geocoding) --------------------
@@ -634,7 +708,6 @@ def profile():
         current_user.emergency_contact_email = request.form.get('emergency_contact_email')
         current_user.emergency_contact_phone = request.form.get('emergency_contact_phone')
         current_user.emergency_contact_carrier = request.form.get('emergency_contact_carrier')
-
         new_address = request.form.get('address')
         if new_address != current_user.address:
             current_user.address = new_address
@@ -645,11 +718,9 @@ def profile():
             else:
                 current_user.latitude = None
                 current_user.longitude = None
-
         db.session.commit()
         flash('Profile updated successfully.', 'success')
         return redirect(url_for('profile'))
-
     return render_template('profile.html')
 
 # -------------------- Client Profile (Read‑only) --------------------
@@ -678,58 +749,46 @@ def verify_identity():
     if current_user.role != 'client':
         flash('Only clients need to verify identity.', 'danger')
         return redirect(url_for('dashboard'))
-
     if current_user.is_verified:
         flash('You are already fully verified.', 'info')
         return redirect(url_for('dashboard'))
-
     if request.method == 'POST':
         if 'id_document' not in request.files:
             flash('Please select a file.', 'danger')
             return redirect(url_for('verify_identity'))
-
         file = request.files['id_document']
         if file.filename == '':
             flash('No file selected.', 'danger')
             return redirect(url_for('verify_identity'))
-
         if not allowed_file(file.filename):
             flash('Invalid file type. Use PNG, JPG, or PDF.', 'danger')
             return redirect(url_for('verify_identity'))
-
         ext = file.filename.rsplit('.', 1)[1].lower()
         temp_filename = secure_filename(f"temp_{current_user.id}_{file.filename}")
         temp_path = os.path.join(app.config['UPLOAD_FOLDER'], temp_filename)
         file.save(temp_path)
-
         if ext in ['png', 'jpg', 'jpeg']:
             if not is_likely_an_id(temp_path):
                 os.remove(temp_path)
                 flash('The uploaded file does not appear to be a valid government‑issued ID. Please upload a clear photo of your ID (passport, driver’s license, national ID).', 'danger')
                 return redirect(url_for('verify_identity'))
-
         perm_filename = secure_filename(f"user_{current_user.id}_id_{file.filename}")
         perm_path = os.path.join(app.config['UPLOAD_FOLDER'], perm_filename)
         os.rename(temp_path, perm_path)
-
         record = VerificationRecord.query.filter_by(user_id=current_user.id).first()
         if not record:
             record = VerificationRecord(user_id=current_user.id)
             db.session.add(record)
-
         record.id_document_path = perm_path
         record.status = 'approved'
         record.submitted_at = datetime.utcnow()
         record.reviewed_at = datetime.utcnow()
         record.reviewed_by_admin_id = None
         db.session.commit()
-
         current_user.is_verified = True
         db.session.commit()
-
         flash('🎉 Your identity has been fully verified instantly! You can now book services.', 'success')
         return redirect(url_for('dashboard'))
-
     return render_template('verify.html')
 
 # -------------------- Admin Routes --------------------
@@ -767,12 +826,10 @@ def admin_users():
     all_users = User.query.all()
     return render_template('admin_users.html', users=all_users)
 
-# -------------------- Admin Incident Management (NEW) --------------------
 @app.route('/admin/incidents')
 @login_required
 @admin_required
 def admin_incidents():
-    # Join AuditLog with User to get user details
     incidents = db.session.query(AuditLog, User).join(User, AuditLog.user_id == User.id).order_by(AuditLog.created_at.desc()).all()
     return render_template('admin_incidents.html', incidents=incidents)
 
@@ -788,4 +845,3 @@ with app.app_context():
 
 if __name__ == '__main__':
     app.run(debug=True)
-    
