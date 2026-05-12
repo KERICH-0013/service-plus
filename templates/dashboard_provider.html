@@ -75,14 +75,9 @@
         <a href="#" class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50">🏆 Provider Network</a>
         <a href="{{ url_for('audit_logs') }}" class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50">🔒 Audit Logs</a>
     </nav>
-    <div class="absolute bottom-6 left-0 right-0 px-4">
-        <button onclick="alert('🚨 EMERGENCY ALERT TRIGGERED! Authorities and emergency contacts notified.')" class="w-full py-3 bg-red-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 sos-pulse">
-            <span class="material-symbols-outlined">emergency</span>
-            SOS PANIC SIGNAL
-        </button>
-        <div class="mt-4 pt-4 border-t border-gray-200">
-            <a href="{{ url_for('support') }}" class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50">💬 Support</a>
-        </div>
+    <!-- Removed the big SOS PANIC SIGNAL button that was overlapping -->
+    <div class="mt-4 pt-4 border-t border-gray-200">
+        <a href="{{ url_for('support') }}" class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50">💬 Support</a>
     </div>
 </aside>
 

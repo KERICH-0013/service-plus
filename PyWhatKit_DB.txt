@@ -113,3 +113,28 @@ Time: 11:51
 Phone Number: +254710250577
 Message: Provider Laban13 has started the session at:Client: me13Location: Latitude: 48.421099, Longitude: -122.317025Live map: https://www.google.com/maps?q=48.421099,-122.317025Service: laptop repairScheduled: 2026-05-09 12:00:00This is an automatic safety notification – real coordinates are included.
 --------------------
+Date: 4/5/2026
+Time: 11:23
+Phone Number: +254701378904
+Message: Provider testuser1 has started the session at:Client: Laban Kipkoech KerichLocation: Latitude: 48.421099, Longitude: -122.317025Live map: https://www.google.com/maps?q=48.421099,-122.317025Service: Nail techScheduled: 2026-05-04 11:30:00This is an automatic safety notification – real coordinates are included.
+--------------------
+Date: 4/5/2026
+Time: 11:24
+Phone Number: +254701378904
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: testuser1Client: Laban Kipkoech KerichService: Nail techScheduled: 2026-05-04 11:30Client Address: 1234 – 00100,Last known location: Location unknown (no GPS data)Please contact the provider immediately.
+--------------------
+Date: 4/5/2026
+Time: 11:24
+Phone Number: +254701378904
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: testuser1Client: Laban Kipkoech KerichService: Nail techScheduled: 2026-05-04 11:30Client Address: 1234 – 00100,Last known location: Location unknown (no GPS data)Please contact the provider immediately.
+--------------------
+Date: 4/5/2026
+Time: 11:24
+Phone Number: +254701378904
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: testuser1Client: Laban Kipkoech KerichService: Nail techScheduled: 2026-05-04 11:30Client Address: 1234 – 00100,Last known location: Location unknown (no GPS data)Please contact the provider immediately.
+--------------------
+Date: 4/5/2026
+Time: 11:24
+Phone Number: +254701378904
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: testuser1Client: Laban Kipkoech KerichService: Nail techScheduled: 2026-05-04 11:30Client Address: 1234 – 00100,Last known location: Location unknown (no GPS data)Please contact the provider immediately.
+--------------------
