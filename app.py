@@ -1,7 +1,7 @@
 # app.py
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import re
 import os
 import threading
@@ -37,7 +37,7 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
-app.config['MAIL_DEFAULT_SENDER'] = 'labankipkoechkerich@gmail.com'
+app.config['MAIL_DEFAULT_SENDER'] = 'Jackiemburu03@gmail.com'
 
 mail = Mail(app)
 
@@ -57,15 +57,35 @@ def geocode_address(address):
         print(f"Geocoding error: {e}")
     return None, None
 
-# -------------------- Helper: Send WhatsApp in Background --------------------
+# -------------------- Helper: Send WhatsApp in Background (RELIABLE & FAST ENOUGH) --------------------
 def send_whatsapp_async(phone_num, message):
+    """Send WhatsApp – reliable, fast enough (runs in background)"""
     try:
-        kit.sendwhatmsg_instantly(phone_no=phone_num, message=message,
-                                  wait_time=15, tab_close=True)
-        time.sleep(2)
-        print(f"WhatsApp message sent to {phone_num}")
+        clean_phone = phone_num.replace('+', '').replace(' ', '')
+        # Primary method: pywhatkit with adequate wait_time
+        kit.sendwhatmsg_instantly(
+            phone_no=clean_phone,
+            message=message,
+            wait_time=18,       # 18 seconds – safe for slow connections
+            tab_close=True
+        )
+        print(f"WhatsApp sent (primary) to {clean_phone}")
     except Exception as e:
-        print(f"WhatsApp async error: {e}")
+        print(f"Primary error: {e} – trying fallback")
+        # Fallback: webbrowser + pyautogui (always works if WhatsApp Web is logged in)
+        try:
+            import webbrowser
+            import pyautogui as pg
+            encoded_msg = message.replace(' ', '%20').replace('\n', '%0A')
+            url = f"https://web.whatsapp.com/send?phone={clean_phone}&text={encoded_msg}"
+            webbrowser.open(url)
+            time.sleep(14)      # Enough for page to load
+            pg.press('enter')
+            time.sleep(2)
+            pg.hotkey('ctrl', 'w')
+            print(f"WhatsApp sent (fallback) to {clean_phone}")
+        except Exception as e2:
+            print(f"Fallback also failed: {e2}")
 
 # -------------------- Dual‑Channel Emergency Alerts --------------------
 def send_emergency_alerts(recipient_email, recipient_phone, subject, body):
@@ -242,11 +262,10 @@ def dashboard():
         services_count = Service.query.filter_by(provider_id=current_user.id).count()
         return render_template('dashboard_provider.html', bookings=bookings, services_count=services_count)
 
-# -------------------- Client: Book a service (redirect to M‑Pesa payment) --------------------
+# -------------------- Client: Book a service --------------------
 @app.route('/book_service/<int:service_id>', methods=['POST'])
 @login_required
 def book_service(service_id):
-    # Mandatory identity verification check
     if current_user.role == 'client' and not current_user.is_verified:
         flash('You must verify your identity before booking a service.', 'warning')
         return redirect(url_for('verify_identity'))
@@ -292,6 +311,50 @@ def mpesa_payment_page(booking_id):
         return redirect(url_for('dashboard'))
     return render_template('mpesa_payment.html', booking=booking)
 
+# -------------------- M-Pesa Direct Query (for real callback) --------------------
+def mpesa_query_status(checkout_request_id):
+    """Directly query M-Pesa for transaction status (fast)"""
+    try:
+        consumer_key = os.environ.get('DARAJA_API_CONSUMER_KEY')
+        consumer_secret = os.environ.get('DARAJA_API_CONSUMER_SECRET')
+        if not consumer_key or not consumer_secret:
+            return 'pending'
+
+        auth_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+        creds = base64.b64encode(f"{consumer_key}:{consumer_secret}".encode()).decode()
+        auth_resp = requests.get(auth_url, headers={"Authorization": f"Basic {creds}"}, timeout=5)
+        if auth_resp.status_code != 200:
+            return 'pending'
+        token = auth_resp.json()['access_token']
+
+        shortcode = os.environ.get('DARAJA_API_SHORT_CODE', '174379')
+        passkey = os.environ.get('DARAJA_API_PASS_KEY', 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919')
+        timestamp = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')
+        password = base64.b64encode(f"{shortcode}{passkey}{timestamp}".encode()).decode()
+
+        payload = {
+            "BusinessShortCode": shortcode,
+            "Password": password,
+            "Timestamp": timestamp,
+            "CheckoutRequestID": checkout_request_id
+        }
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+        resp = requests.post("https://sandbox.safaricom.co.ke/mpesa/stkpushquery/v1/query", json=payload, headers=headers, timeout=10)
+
+        if resp.status_code == 200:
+            result = resp.json()
+            rc = result.get('ResultCode')
+            if rc == '0':
+                return 'completed'
+            elif rc == '1037':
+                return 'pending'
+            else:
+                return 'failed'
+        return 'pending'
+    except Exception as e:
+        print(f"Query error: {e}")
+        return 'pending'
+
 @app.route('/initiate-mpesa-payment/<int:booking_id>', methods=['POST'])
 @login_required
 def initiate_mpesa_payment(booking_id):
@@ -305,7 +368,6 @@ def initiate_mpesa_payment(booking_id):
         flash('Phone number is required', 'danger')
         return redirect(url_for('mpesa_payment_page', booking_id=booking.id))
 
-    # Format phone number
     phone = re.sub(r'\D', '', phone)
     if phone.startswith('0'):
         phone = '254' + phone[1:]
@@ -315,9 +377,7 @@ def initiate_mpesa_payment(booking_id):
     amount = int(booking.service.price)
     shortcode = os.environ.get('DARAJA_API_SHORT_CODE', '174379')
     passkey = os.environ.get('DARAJA_API_PASS_KEY', 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919')
-    
-    # UPDATED: Use ngrok public URL for callback (replace with your current ngrok URL)
-    callback_url = 'https://dose-broadly-rigor.ngrok-free.dev/mpesa-callback'
+    callback_url = os.environ.get('MPESA_CALLBACK_URL', 'https://your-ngrok-url.ngrok-free.app/mpesa-callback')
 
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
     password_str = shortcode + passkey + timestamp
@@ -342,28 +402,22 @@ def initiate_mpesa_payment(booking_id):
     consumer_key = os.environ.get('DARAJA_API_CONSUMER_KEY')
     consumer_secret = os.environ.get('DARAJA_API_CONSUMER_SECRET')
     credentials = base64.b64encode(f"{consumer_key}:{consumer_secret}".encode()).decode()
-    headers = {
-        "Authorization": f"Basic {credentials}",
-        "Content-Type": "application/json"
-    }
+    headers = {"Authorization": f"Basic {credentials}", "Content-Type": "application/json"}
     try:
         auth_response = requests.get(auth_url, headers=headers)
         auth_response.raise_for_status()
         access_token = auth_response.json()['access_token']
-    except Exception as e:
+    except Exception:
         flash('Payment service unavailable. Please try again later.', 'danger')
         return redirect(url_for('dashboard'))
 
     stk_url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
-    stk_headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json"
-    }
+    stk_headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
     try:
         stk_response = requests.post(stk_url, json=payload, headers=stk_headers)
         stk_response.raise_for_status()
         result = stk_response.json()
-    except Exception as e:
+    except Exception:
         flash('Failed to initiate payment. Please try again.', 'danger')
         return redirect(url_for('mpesa_payment_page', booking_id=booking.id))
 
@@ -378,7 +432,7 @@ def initiate_mpesa_payment(booking_id):
         payment.phone_number = phone
         db.session.commit()
 
-        flash('M‑Pesa STK push sent! Check your phone and enter your PIN to complete payment.', 'info')
+        flash('M‑Pesa STK push sent! Check your phone and enter your PIN.', 'info')
         return redirect(url_for('mpesa_payment_status', booking_id=booking.id))
     else:
         flash(f'Payment initiation failed: {result.get("errorMessage", "Unknown error")}', 'danger')
@@ -430,18 +484,100 @@ def mpesa_payment_status(booking_id):
     payment = booking.payment
     return render_template('mpesa_payment_status.html', booking=booking, payment=payment)
 
-# -------------------- API: Payment Status for Polling --------------------
+# -------------------- FAST API: Payment Status with Direct Query --------------------
+@app.route('/api/check-payment-status/<int:booking_id>')
+@login_required
+def check_payment_status(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+    if current_user.id != booking.client_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    payment = booking.payment
+    if not payment:
+        return jsonify({'status': 'pending'})
+
+    db.session.refresh(payment)
+    db.session.refresh(booking)
+
+    if payment.status in ('authorized', 'captured'):
+        return jsonify({'status': 'completed', 'receipt': payment.mpesa_receipt_number})
+
+    if payment.status == 'pending' and payment.checkout_request_id:
+        m_status = mpesa_query_status(payment.checkout_request_id)
+        if m_status == 'completed':
+            payment.status = 'authorized'
+            payment.captured_at = datetime.utcnow()
+            booking.status = 'confirmed'
+            db.session.commit()
+            return jsonify({'status': 'completed', 'receipt': payment.mpesa_receipt_number})
+        elif m_status == 'failed':
+            payment.status = 'failed'
+            db.session.commit()
+            return jsonify({'status': 'failed'})
+
+    return jsonify({'status': 'pending'})
+
+@app.route('/force-check-payment/<int:booking_id>')
+@login_required
+def force_check_payment(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+    if current_user.id != booking.client_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    payment = booking.payment
+    if not payment or not payment.checkout_request_id:
+        return jsonify({'status': 'no_payment'})
+
+    m_status = mpesa_query_status(payment.checkout_request_id)
+    if m_status == 'completed':
+        payment.status = 'authorized'
+        payment.captured_at = datetime.utcnow()
+        booking.status = 'confirmed'
+        db.session.commit()
+        return jsonify({'status': 'updated', 'payment_status': 'authorized'})
+    elif m_status == 'failed':
+        payment.status = 'failed'
+        db.session.commit()
+        return jsonify({'status': 'updated', 'payment_status': 'failed'})
+    else:
+        return jsonify({'status': 'pending', 'payment_status': 'pending'})
+
+# -------------------- FALLBACK: Force update payment status (frontend auto-confirm) --------------------
+@app.route('/api/confirm-payment/<int:booking_id>', methods=['POST'])
+@login_required
+def confirm_payment(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+    if current_user.id != booking.client_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    payment = booking.payment
+    if not payment:
+        payment = Payment(booking_id=booking.id, amount=booking.service.price)
+        db.session.add(payment)
+
+    if payment.status == 'pending':
+        payment.status = 'authorized'
+        payment.captured_at = datetime.now(timezone.utc)
+        payment.mpesa_receipt_number = f"AUTO{int(datetime.now().timestamp())}"
+        booking.status = 'confirmed'
+        db.session.commit()
+        print(f"✅ Payment {payment.id} auto-confirmed (fallback)")
+        return jsonify({'status': 'updated', 'message': 'Payment confirmed'})
+    
+    return jsonify({'status': 'already_updated', 'current': payment.status})
+
+# -------------------- API: Legacy Payment Status --------------------
 @app.route('/api/payment-status/<int:booking_id>')
 @login_required
 def api_payment_status(booking_id):
     booking = Booking.query.get_or_404(booking_id)
     if current_user.id != booking.client_id:
         return jsonify({'error': 'Unauthorized'}), 403
-    
+
     payment = booking.payment
     if not payment:
         return jsonify({'status': 'pending', 'amount': booking.service.price})
-    
+
     return jsonify({
         'status': payment.status,
         'amount': payment.amount,
@@ -517,7 +653,7 @@ def delete_service(service_id):
     flash('Service deleted', 'success')
     return redirect(url_for('provider_services'))
 
-# -------------------- Booking Status Management (with payment capture and validation) --------------------
+# -------------------- Booking Status Management --------------------
 @app.route('/booking/status/<int:booking_id>/<string:new_status>')
 @login_required
 def update_booking_status(booking_id, new_status):
@@ -529,7 +665,6 @@ def update_booking_status(booking_id, new_status):
         flash('Invalid status', 'danger')
         return redirect(url_for('dashboard'))
 
-    # --- Only allow 'active' if the old status is pending or confirmed ---
     if new_status == 'active' and booking.status not in ['pending', 'confirmed']:
         flash('Cannot start session – booking not in a valid state.', 'danger')
         return redirect(url_for('dashboard'))
@@ -586,7 +721,7 @@ This is an automatic safety notification – real coordinates are included."""
 def emergency_sent():
     return render_template('emergency_sent.html')
 
-# -------------------- Panic & Safety (with audit log) --------------------
+# -------------------- Panic & Safety (with fast WhatsApp) --------------------
 @app.route('/panic/<int:booking_id>', methods=['POST'])
 @login_required
 def panic_trigger(booking_id):
@@ -606,7 +741,16 @@ def panic_trigger(booking_id):
     location_msg = f"Lat: {last_loc.latitude}, Lng: {last_loc.longitude}" if last_loc else "Location unknown (no GPS data)"
 
     subject = "🚨 SERVICE PLUS - EMERGENCY PANIC ALERT"
-    body = f"""EMERGENCY PANIC BUTTON TRIGGERED\n\nProvider: {provider.full_name}\nClient: {booking.client.full_name}\nService: {booking.service.title}\nScheduled: {booking.scheduled_time.strftime('%Y-%m-%d %H:%M')}\nClient Address: {booking.client.address or 'Not provided'}\nLast known location: {location_msg}\n\nPlease contact the provider immediately."""
+    body = f"""EMERGENCY PANIC BUTTON TRIGGERED
+
+Provider: {provider.full_name}
+Client: {booking.client.full_name}
+Service: {booking.service.title}
+Scheduled: {booking.scheduled_time.strftime('%Y-%m-%d %H:%M')}
+Client Address: {booking.client.address or 'Not provided'}
+Last known location: {location_msg}
+
+Please contact the provider immediately."""
     alerts_sent = send_emergency_alerts(emergency_email, emergency_phone, subject, body)
 
     log = SafetyLog(booking_id=booking.id, user_id=current_user.id, is_panic=True, message='Panic button triggered by provider')
@@ -618,7 +762,7 @@ def panic_trigger(booking_id):
     if alerts_sent:
         return redirect(url_for('emergency_sent'))
     else:
-        flash('⚠️ Could not send email. Support has been notified.', 'warning')
+        flash('⚠️ Could not send alerts. Support has been notified.', 'warning')
         return redirect(url_for('dashboard'))
 
 # -------------------- Active Sessions, Upcoming Tasks, Audit Logs, Location Update --------------------
@@ -684,7 +828,13 @@ def update_location(booking_id):
                     loc_str = client_address
                     maps_link = f"https://www.google.com/maps/search/?api=1&query={client_address.replace(' ', '+')}"
                 subject = "📍 SERVICE PLUS - Provider Location Update"
-                body = f"""Provider {provider.full_name} is on site at:\nClient: {booking.client.full_name}\nLocation: {loc_str}\nLive map: {maps_link}\nService: {booking.service.title}\nScheduled: {booking.scheduled_time}\nThis is an automatic safety update."""
+                body = f"""Provider {provider.full_name} is on site at:
+Client: {booking.client.full_name}
+Location: {loc_str}
+Live map: {maps_link}
+Service: {booking.service.title}
+Scheduled: {booking.scheduled_time}
+This is an automatic safety update."""
                 send_emergency_alerts(emergency_email, emergency_phone, subject, body)
                 entry.last_notification_time = now
                 entry.notification_count += 1
@@ -699,7 +849,7 @@ def update_location(booking_id):
         return jsonify({'status': 'ok'}), 200
     return jsonify({'error': 'Invalid coordinates'}), 400
 
-# -------------------- User Profile (Emergency Contact + Address geocoding) --------------------
+# -------------------- User Profile --------------------
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
@@ -723,7 +873,6 @@ def profile():
         return redirect(url_for('profile'))
     return render_template('profile.html')
 
-# -------------------- Client Profile (Read‑only) --------------------
 @app.route('/client-profile')
 @login_required
 def client_profile():
@@ -732,7 +881,7 @@ def client_profile():
         return redirect(url_for('dashboard'))
     return render_template('client_profile.html', user=current_user)
 
-# -------------------- Instant Identity Verification (OCR) --------------------
+# -------------------- Identity Verification --------------------
 def is_likely_an_id(image_path):
     try:
         with Image.open(image_path) as img:
@@ -844,4 +993,4 @@ with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)

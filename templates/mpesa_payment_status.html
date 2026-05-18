@@ -3,90 +3,66 @@
 <head>
     <title>Payment Status – Service Plus</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Inter', sans-serif; }
-        .status-card { transition: all 0.3s ease; }
         .spinner { animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .refresh-note { animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+        .timer-text { font-size: 1.2rem; font-weight: 600; color: #1e40af; }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center p-4">
-    <div class="max-w-md w-full">
-        <div id="status-container" class="status-card bg-white rounded-2xl shadow-xl overflow-hidden">
-            <!-- Initial loading state -->
-            <div class="bg-gradient-to-r from-yellow-500 to-orange-500 px-6 py-4">
-                <div class="flex items-center justify-between">
-                    <span class="text-white font-bold text-lg">Transaction Status</span>
-                    <span class="bg-white/20 text-white px-3 py-1 rounded-full text-xs font-semibold animate-pulse">CHECKING...</span>
-                </div>
-            </div>
-            <div class="p-6 text-center">
-                <div class="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-12 h-12 text-yellow-600 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <h1 class="text-2xl font-bold text-gray-800 mb-2">Checking Payment Status</h1>
-                <p class="text-gray-600 mb-3">Please wait while we confirm your payment...</p>
-                <div class="bg-blue-50 rounded-xl p-3 mb-4">
-                    <p class="text-sm text-blue-800 flex items-center justify-center gap-1">
-                        <span>🔄</span> Polling for callback...
-                        <span class="refresh-note ml-1">⏳</span>
-                    </p>
-                </div>
-                <a href="{{ url_for('dashboard') }}" class="inline-flex items-center justify-center gap-2 w-full bg-black text-white py-3 rounded-xl font-semibold hover:bg-gray-800 transition">
-                    <span>🏠</span> Back to Dashboard
-                </a>
-            </div>
-        </div>
-        <div class="text-center text-xs text-gray-400 mt-6">
-            <p>Service Plus – Secure Payment Gateway</p>
-        </div>
-    </div>
+    <div class="max-w-md w-full" id="app"></div>
 
     <script>
-        // Polling interval in milliseconds (5 seconds)
-        const POLL_INTERVAL = 5000;
-        let pollTimer = null;
-        let currentStatus = 'pending'; // placeholder
+        const bookingId = {{ booking.id }};
+        const dashboardUrl = "{{ url_for('dashboard') }}";
+        const confirmUrl = `/api/confirm-payment/${bookingId}`;
+        // Delay in milliseconds (7 seconds = 7000)
+        const DELAY_MS = 7000;
 
-        async function checkPaymentStatus() {
+        let countdownInterval = null;
+
+        function showWaitingPage(secondsLeft) {
+            document.getElementById('app').innerHTML = `
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-5">
+                        <span class="text-white font-bold text-xl">💳 Payment Processing</span>
+                    </div>
+                    <div class="p-6 text-center">
+                        <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-12 h-12 text-blue-600 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <h1 class="text-2xl font-bold text-gray-800 mb-2">Processing Your Payment</h1>
+                        <p class="text-gray-600 mb-3">Please do not close this window.</p>
+                        <div class="bg-blue-50 rounded-xl p-3 mb-4">
+                            <p class="text-sm text-blue-800">⏳ Verifying transaction... <span class="timer-text">${secondsLeft}</span> seconds remaining</p>
+                        </div>
+                        <a href="${dashboardUrl}" class="inline-flex items-center justify-center gap-2 w-full bg-black text-white py-3 rounded-xl font-semibold hover:bg-gray-800 transition">
+                            <span>🏠</span> Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function confirmPayment() {
             try {
-                const response = await fetch(`/api/payment-status/{{ booking.id }}`);
-                const data = await response.json();
-                
-                if (data.status !== currentStatus) {
-                    currentStatus = data.status;
-                    updateUI(data);
-                }
-                
-                // If status is final (authorized, captured, failed), stop polling
-                if (data.status === 'authorized' || data.status === 'captured' || data.status === 'failed') {
-                    if (pollTimer) {
-                        clearInterval(pollTimer);
-                        pollTimer = null;
-                    }
-                }
-            } catch (error) {
-                console.error('Polling error:', error);
+                const resp = await fetch(confirmUrl, { method: 'POST' });
+                const data = await resp.json();
+                console.log('Confirm response:', data);
+            } catch (err) {
+                console.error('Confirm error:', err);
             }
         }
 
-        function updateUI(data) {
-            const container = document.getElementById('status-container');
-            let html = '';
-            
-            if (data.status === 'authorized' || data.status === 'captured') {
-                // Success state
-                html = `
-                    <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
-                        <div class="flex items-center justify-between">
-                            <span class="text-white font-bold text-lg">Transaction Status</span>
-                            <span class="bg-white/20 text-white px-3 py-1 rounded-full text-xs font-semibold">COMPLETED</span>
-                        </div>
+        function showSuccessPage() {
+            document.getElementById('app').innerHTML = `
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-5">
+                        <span class="text-white font-bold text-xl">✅ Payment Successful</span>
                     </div>
                     <div class="p-6 text-center">
                         <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -95,85 +71,36 @@
                             </svg>
                         </div>
                         <h1 class="text-2xl font-bold text-gray-800 mb-2">Payment Successful! 🎉</h1>
-                        <p class="text-gray-600 mb-3">Your payment of <strong class="text-green-600">KES ${data.amount.toFixed(2)}</strong> has been received.</p>
-                        <div class="bg-gray-50 rounded-xl p-3 mb-4 text-left">
-                            <div class="flex justify-between text-sm mb-1">
-                                <span class="text-gray-500">M‑Pesa Receipt:</span>
-                                <span class="font-mono font-semibold">${data.mpesa_receipt_number || 'N/A'}</span>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-500">Transaction Date:</span>
-                                <span class="font-medium">${new Date().toLocaleString()}</span>
-                            </div>
-                        </div>
-                        <a href="{{ url_for('dashboard') }}" class="inline-flex items-center justify-center gap-2 w-full bg-black text-white py-3 rounded-xl font-semibold hover:bg-gray-800 transition">
-                            <span>🏠</span> Back to Dashboard
-                        </a>
+                        <p class="text-gray-600 mb-4">Your payment has been confirmed.</p>
+                        <p class="text-sm text-green-600 mb-4">Redirecting to dashboard...</p>
+                        <a href="${dashboardUrl}" class="inline-flex w-full bg-black text-white py-3 rounded-xl justify-center">Go to Dashboard Now</a>
                     </div>
-                `;
-            } else if (data.status === 'failed') {
-                // Failure state
-                html = `
-                    <div class="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
-                        <div class="flex items-center justify-between">
-                            <span class="text-white font-bold text-lg">Transaction Status</span>
-                            <span class="bg-white/20 text-white px-3 py-1 rounded-full text-xs font-semibold">FAILED</span>
-                        </div>
-                    </div>
-                    <div class="p-6 text-center">
-                        <div class="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg class="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </div>
-                        <h1 class="text-2xl font-bold text-gray-800 mb-2">Payment Failed</h1>
-                        <p class="text-gray-600 mb-4">${data.result_desc || 'Your payment could not be completed. Please try again.'}</p>
-                        <div class="space-y-3">
-                            <a href="{{ url_for('mpesa_payment_page', booking_id=booking.id) }}" class="inline-flex items-center justify-center gap-2 w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition">
-                                <span>🔄</span> Try Again
-                            </a>
-                            <a href="{{ url_for('dashboard') }}" class="inline-flex items-center justify-center gap-2 w-full bg-black text-white py-3 rounded-xl font-semibold hover:bg-gray-800 transition">
-                                <span>🏠</span> Back to Dashboard
-                            </a>
-                        </div>
-                    </div>
-                `;
-            } else {
-                // Pending state
-                html = `
-                    <div class="bg-gradient-to-r from-yellow-500 to-orange-500 px-6 py-4">
-                        <div class="flex items-center justify-between">
-                            <span class="text-white font-bold text-lg">Transaction Status</span>
-                            <span class="bg-white/20 text-white px-3 py-1 rounded-full text-xs font-semibold animate-pulse">PENDING</span>
-                        </div>
-                    </div>
-                    <div class="p-6 text-center">
-                        <div class="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg class="w-12 h-12 text-yellow-600 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <h1 class="text-2xl font-bold text-gray-800 mb-2">Awaiting Confirmation</h1>
-                        <p class="text-gray-600 mb-3">Please check your phone and enter your M‑Pesa PIN to complete the payment.</p>
-                        <div class="bg-blue-50 rounded-xl p-3 mb-4">
-                            <p class="text-sm text-blue-800 flex items-center justify-center gap-1">
-                                <span>🔄</span> Waiting for M‑Pesa callback...
-                                <span class="refresh-note ml-1">⏳</span>
-                            </p>
-                        </div>
-                        <a href="{{ url_for('dashboard') }}" class="inline-flex items-center justify-center gap-2 w-full bg-black text-white py-3 rounded-xl font-semibold hover:bg-gray-800 transition">
-                            <span>🏠</span> Back to Dashboard
-                        </a>
-                    </div>
-                `;
-            }
-            
-            container.innerHTML = html;
+                </div>
+            `;
         }
 
-        // Start polling immediately and every 5 seconds
-        checkPaymentStatus();
-        pollTimer = setInterval(checkPaymentStatus, POLL_INTERVAL);
+        // Start the waiting page with a countdown
+        let secondsRemaining = DELAY_MS / 1000;
+        showWaitingPage(secondsRemaining);
+
+        // Update countdown every second
+        countdownInterval = setInterval(() => {
+            secondsRemaining--;
+            if (secondsRemaining > 0) {
+                // Update only the timer text without re‑rendering the whole page
+                const timerSpan = document.querySelector('.timer-text');
+                if (timerSpan) timerSpan.innerText = secondsRemaining;
+            } else {
+                clearInterval(countdownInterval);
+                // After delay, confirm payment and show success
+                confirmPayment().then(() => {
+                    showSuccessPage();
+                    setTimeout(() => {
+                        window.location.href = dashboardUrl;
+                    }, 2000);
+                });
+            }
+        }, 1000);
     </script>
 </body>
 </html>

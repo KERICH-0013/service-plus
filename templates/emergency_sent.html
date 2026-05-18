@@ -1,42 +1,52 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Emergency Alert Sent – Service Plus</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <style>
-        .pulse-red {
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.8; }
-            100% { transform: scale(1); opacity: 1; }
-        }
+        * { font-family: 'Inter', sans-serif; }
+        .spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="bg-red-50">
-    <div class="min-h-screen flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center border-4 border-red-500">
-            <div class="text-6xl mb-4 pulse-red">🚨</div>
-            <h1 class="text-3xl font-black text-red-700 mb-2">EMERGENCY ALERT SENT</h1>
-            <div class="w-16 h-1 bg-red-500 mx-auto my-4 rounded-full"></div>
-            <p class="text-gray-700 mb-4">
-                Your distress signal has been successfully transmitted to your emergency contact.
-            </p>
-            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 text-left">
-                <p class="font-bold text-yellow-800">⚠️ PLEASE WAIT FOR RESCUE</p>
-                <p class="text-sm text-yellow-700 mt-1">Help is on the way. Stay calm and remain at your current location if safe.</p>
+<body class="bg-gradient-to-br from-red-50 to-orange-100 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full">
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden text-center">
+            <div class="bg-gradient-to-r from-red-500 to-orange-500 px-6 py-5">
+                <span class="text-white font-bold text-xl">🚨 Emergency Alert Sent</span>
             </div>
-            <div class="text-sm text-gray-500 mb-6">
-                Your emergency contact has been notified via email and WhatsApp with your live location and appointment details.
+            <div class="p-6">
+                <div class="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">Alert Successfully Sent</h1>
+                <p class="text-gray-600 mb-3">Your emergency contacts have been notified via WhatsApp and email.</p>
+                <div class="bg-yellow-50 rounded-xl p-3 mb-4">
+                    <p class="text-sm text-yellow-800">⏳ Redirecting to dashboard in <span id="countdown" class="font-bold text-lg">5</span> seconds...</p>
+                </div>
+                <a href="{{ url_for('dashboard') }}" class="inline-flex w-full bg-red-600 text-white py-3 rounded-xl justify-center font-semibold hover:bg-red-700 transition">
+                    Go to Dashboard Now
+                </a>
             </div>
-            <a href="{{ url_for('dashboard') }}" 
-               class="inline-block bg-black text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition w-full text-center">
-                Return to Dashboard
-            </a>
         </div>
     </div>
+
+    <script>
+        let secondsLeft = 5;
+        const countdownEl = document.getElementById('countdown');
+        const interval = setInterval(() => {
+            secondsLeft--;
+            if (secondsLeft >= 0) {
+                countdownEl.innerText = secondsLeft;
+            }
+            if (secondsLeft < 0) {
+                clearInterval(interval);
+                window.location.href = "{{ url_for('dashboard') }}";
+            }
+        }, 1000);
+    </script>
 </body>
 </html>

@@ -138,3 +138,28 @@ Time: 11:24
 Phone Number: +254701378904
 Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: testuser1Client: Laban Kipkoech KerichService: Nail techScheduled: 2026-05-04 11:30Client Address: 1234 – 00100,Last known location: Location unknown (no GPS data)Please contact the provider immediately.
 --------------------
+Date: 18/5/2026
+Time: 11:28
+Phone Number: +254710250577
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: Laban Kipkoech KerichClient: kerichService: wifiScheduled: 2026-05-02 22:40Client Address: 1234 – 00100,Last known location: Location unknown (no GPS data)Please contact the provider immediately.
+--------------------
+Date: 18/5/2026
+Time: 11:29
+Phone Number: +254710250577
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: Laban Kipkoech KerichClient: kerichService: wifiScheduled: 2026-05-02 22:40Client Address: 1234 – 00100,Last known location: Location unknown (no GPS data)Please contact the provider immediately.
+--------------------
+Date: 18/5/2026
+Time: 11:31
+Phone Number: +254710250577
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: Laban Kipkoech KerichClient: kerichService: wifiScheduled: 2026-05-02 22:40Client Address: 1234 – 00100,Last known location: Location unknown (no GPS data)Please contact the provider immediately.
+--------------------
+Date: 18/5/2026
+Time: 11:41
+Phone Number: +254710250577
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: Laban Kipkoech KerichClient: kerichService: wifiScheduled: 2026-05-02 22:40Client Address: 1234 – 00100,Last known location: Location unknown (no GPS data)Please contact the provider immediately.
+--------------------
+Date: 18/5/2026
+Time: 11:42
+Phone Number: +254710250577
+Message: EMERGENCY PANIC BUTTON TRIGGEREDProvider: Laban Kipkoech KerichClient: kerichService: wifiScheduled: 2026-05-02 22:40Client Address: 1234 – 00100,Last known location: Location unknown (no GPS data)Please contact the provider immediately.
+--------------------
